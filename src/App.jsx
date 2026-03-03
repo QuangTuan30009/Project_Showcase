@@ -1,6 +1,4 @@
-import { useState, useRef } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { useRef } from "react";
 import "./App.css";
 import Navbar from "./Component/Navbar";
 import Hero_section from "./Component/Hero-section";
