@@ -21,7 +21,11 @@ function App() {
         onAbout={() => aboutref.current.scrollIntoView({ behavior: "smooth" })}
       />
       <div ref={homeref}>
-        <Hero_section />
+        <Hero_section
+          onProject={() =>
+            projectref.current.scrollIntoView({ behavior: "smooth" })
+          }
+        />
       </div>
       <div ref={projectref}>
         {/* Project section sẽ ở đây */}
@@ -30,7 +34,11 @@ function App() {
         </h2>
       </div>
       <div ref={aboutref}>
-        <About />
+        <About
+          onProject={() =>
+            projectref.current.scrollIntoView({ behavior: "smooth" })
+          }
+        />
       </div>
     </div>
   );

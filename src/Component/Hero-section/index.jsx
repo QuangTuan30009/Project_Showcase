@@ -1,6 +1,6 @@
 import React from "react";
 import "./index.scss";
-function Hero_section() {
+function Hero_section({ onProject }) {
   return (
     <div className="hero-container">
       <p className="p-intro">Community Project Gallery</p>
@@ -10,7 +10,7 @@ function Hero_section() {
         from the community, and connect with fellow builders around the world.
       </p>
       <div className="button">
-        <button onClick={() => onProject} className="button-explore">
+        <button onClick={onProject} className="button-explore">
           <i className="bi bi-rocket-takeoff-fill"></i>
           Explore Projects
         </button>

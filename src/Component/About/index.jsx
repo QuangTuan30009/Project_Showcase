@@ -1,6 +1,6 @@
 import React from "react";
 import "./index.scss";
-function About() {
+function About({ onProject }) {
   return (
     <div className="about_container">
       <p className="abt-intro">ABOUT</p>
@@ -11,14 +11,18 @@ function About() {
         seasoned pro, your project belongs here.
       </p>
       <div className="button">
-        <button className="btn-1">
+        <button onClick={onProject} className="btn-1">
           <i className="bi bi-chat-dots-fill"></i>
           Share your Project
         </button>
-        <button className="btn-2">
+        <a
+          className="btn-2"
+          href="https://github.com/QuangTuan30009/Project_Showcase"
+          target="_blank"
+        >
           <i className="bi bi-github"></i>
           View on Github
-        </button>
+        </a>
       </div>
     </div>
   );
