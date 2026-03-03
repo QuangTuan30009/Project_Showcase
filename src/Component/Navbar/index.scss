@@ -1,0 +1,52 @@
+@import "../../Style/mixin.scss";
+.navbar-container {
+  @include padding-page;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #f5f1e8;
+  z-index: 100;
+
+  .navbar_logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    i {
+      font-size: 24px;
+      color: #2d2d2d;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #2d2d2d;
+    }
+  }
+
+  .navbar_menu {
+    .navbar_menu_list {
+      display: flex;
+      gap: 40px;
+      list-style: none;
+
+      li {
+        font-size: 16px;
+        font-weight: 500;
+        color: #6b6b6b;
+        cursor: pointer;
+        transition: color 0.3s ease;
+
+        &:hover {
+          color: #a67c52;
+        }
+      }
+    }
+  }
+}

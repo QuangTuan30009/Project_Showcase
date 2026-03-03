@@ -1,0 +1,95 @@
+@import "../../Style/mixin.scss";
+
+.hero-container {
+  @include padding-page;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+
+  .p-intro {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    letter-spacing: 2px;
+    padding-bottom: 20px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: #b8794e;
+  }
+
+  .title {
+    font-size: 72px;
+    font-weight: 700;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-family: "Playfair Display", Georgia, serif;
+    color: #2d2d2d;
+    line-height: 1.2;
+  }
+
+  .p-descrip {
+    padding: 0 190px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 18px;
+    padding-top: 25px;
+    line-height: 1.6;
+    color: #6b6b6b;
+  }
+
+  .button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 45px;
+    gap: 20px;
+
+    .button-explore {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      background-color: #a67c52;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: #8f6842;
+        transform: translateY(-2px);
+      }
+    }
+
+    .button-community {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      background-color: transparent;
+      color: #2d2d2d;
+      border: 2px solid #d4d4d4;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: #a67c52;
+        color: #a67c52;
+        transform: translateY(-2px);
+      }
+    }
+  }
+}
