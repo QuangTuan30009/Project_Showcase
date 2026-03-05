@@ -3,6 +3,7 @@ import "./App.css";
 import Navbar from "./Component/Navbar";
 import Hero_section from "./Component/Hero-section";
 import About from "./Component/About";
+import Project from "./Component/Project";
 
 function App() {
   const homeref = useRef(null);
@@ -27,10 +28,11 @@ function App() {
       </div>
       <div ref={projectref}>
         {/* Project section sẽ ở đây */}
-        <h2 style={{ padding: "100px", textAlign: "center" }}>
-          Projects Section
+        <h2 style={{ padding: "50px", textAlign: "center" }}>
         </h2>
       </div>
+
+      <Project />
       <div ref={aboutref}>
         <About
           onProject={() =>
