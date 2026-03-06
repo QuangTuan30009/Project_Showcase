@@ -1,5 +1,6 @@
 import React from "react";
 import "./index.scss";
+import Project_list from "./Project-list";
 function Project() {
   return (
     <div className="project-container">
@@ -22,6 +23,22 @@ function Project() {
           placeholder="Search projects by title or keyword..."
         />
       </div>
+
+      <div className="button-tech">
+        <button>All</button>
+        <button>AI</button>
+        <button>Technical</button>
+        <button>Role</button>
+        <button>Personal</button>
+      </div>
+      <div className="button-add">
+        <button>
+          <i className="bi bi-plus-lg"></i>
+          Add Your Project
+        </button>
+      </div>
+
+      <Project_list />
     </div>
   );
 }
