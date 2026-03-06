@@ -2,7 +2,7 @@
 
 .project-container {
   @include padding-page;
-//   padding-top: 5px;
+  //   padding-top: 5px;
   padding-bottom: 100px;
   display: flex;
   flex-direction: column;
@@ -76,6 +76,58 @@
         // border-color: #a67c52;
         border: 3px solid #a67c52;
         background-color: #fff;
+      }
+    }
+  }
+
+  .button-tech{
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    button {
+      padding: 8px 15px;
+      background-color: #f1ebeb;
+      color: #333;
+      border: none;
+      border-radius: 20px;
+      font-size: 14px;
+      gap: 15px;
+      cursor: default;
+
+      &:hover {
+        background-color: #a67c52;
+        color: #fff;
+      }
+    }
+  }
+
+  .button-add {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 15px;
+      background-color: #a67c52;
+      color: #fff;
+      font-style: inherit;
+      border: none;
+      border-radius: 50px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+
+      i {
+        font-size: 18px;
+      }
+
+      &:hover {
+        background-color: #8b5e3c;
       }
     }
   }
