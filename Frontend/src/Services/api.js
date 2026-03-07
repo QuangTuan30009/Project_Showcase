@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://project-showcase-tg3m.onrender.com/api";
 
 // Get all projects
 export const getProjects = async () => {
