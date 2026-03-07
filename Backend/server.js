@@ -7,7 +7,18 @@ const Project = require("./models/Project");
 const app = express();
 const dns = require("node:dns");
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
-app.use(cors());
+
+// CORS configuration
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://project-showcase-phi.vercel.app'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // Connect to MongoDB
