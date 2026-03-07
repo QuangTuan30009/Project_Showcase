@@ -1,0 +1,103 @@
+{
+  "projects": [
+    {
+      "id": 1,
+      "title": "AI Chat Assistant",
+      "description": "A conversational AI chatbot built with OpenAI's API, featuring real-time streaming responses and context-aware dialogue.",
+      "category": "AI",
+      "techStack": [
+        "React",
+        "Next.js",
+        "OpenAI",
+        "Tailwind CSS"
+      ],
+      "image": "https://www.ilink-digital.com/wp-content/uploads/2023/05/Conversation-between-chat-bot-on-screen-of-phone-and-customer-scaled.jpg",
+      "githubLink": "",
+      "liveDemoLink": ""
+    },
+    {
+      "id": 2,
+      "title": "Analytics Dashboard",
+      "description": "A comprehensive analytics dashboard with real-time data visualization, custom charts, and interactive reporting tools.",
+      "category": "Technical",
+      "techStack": [
+        "React",
+        "D3.js",
+        "Node.js",
+        "MongoDB"
+      ],
+      "image": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800",
+      "githubLink": "",
+      "liveDemoLink": ""
+    },
+    {
+      "id": 3,
+      "title": "E-commerce Platform",
+      "description": "A modern online shopping platform with cart management, payment integration, and order tracking capabilities.",
+      "category": "Technical",
+      "techStack": [
+        "Vue.js",
+        "Stripe",
+        "PostgreSQL",
+        "SCSS"
+      ],
+      "image": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800",
+      "githubLink": "",
+      "liveDemoLink": ""
+    },
+    {
+      "id": 4,
+      "title": "Task Manager App",
+      "description": "A collaborative task management app with drag-and-drop interface, team collaboration, and deadline tracking.",
+      "category": "Personal",
+      "techStack": [
+        "React",
+        "Firebase",
+        "Material-UI"
+      ],
+      "image": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
+      "githubLink": "",
+      "liveDemoLink": ""
+    },
+    {
+      "id": 5,
+      "title": "Online Code Editor",
+      "description": "A browser-based code editor with syntax highlighting, live preview, and multi-language support.",
+      "category": "Technical",
+      "techStack": [
+        "TypeScript",
+        "Monaco Editor",
+        "Express"
+      ],
+      "image": "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=800",
+      "githubLink": "",
+      "liveDemoLink": ""
+    },
+    {
+      "id": 6,
+      "title": "Music Streaming App",
+      "description": "A beautiful music streaming application with playlist management, audio visualization, and social sharing features.",
+      "category": "Personal",
+      "techStack": [
+        "React Native",
+        "Spotify API",
+        "Redux"
+      ],
+      "image": "https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=800",
+      "githubLink": "",
+      "liveDemoLink": ""
+    },
+    {
+      "id": 7,
+      "title": "123",
+      "description": "123",
+      "category": "Technical",
+      "techStack": [
+        "react"
+      ],
+      "githubLink": "",
+      "liveDemoLink": "",
+      "image": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800"
+    }
+  ]
+}
