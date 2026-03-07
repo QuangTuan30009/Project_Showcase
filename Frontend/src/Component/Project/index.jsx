@@ -116,7 +116,11 @@ function Project() {
   if (loading) {
     return (
       <div className="project-container">
-        <div className="loading">Loading projects...</div>
+        <div className="loading">
+          <div className="spinner"></div>
+          <p>Loading projects...</p>
+          <p className="loading-hint">First load may take 20-30 seconds as the server wakes up</p>
+        </div>
       </div>
     );
   }
@@ -124,8 +128,11 @@ function Project() {
   if (error) {
     return (
       <div className="project-container">
-        <div className="error">{error}</div>
-        <button onClick={fetchProjects}>Retry</button>
+        <div className="error">
+          <p>{error}</p>
+          <p className="error-hint">The server might be waking up. Please try again.</p>
+          <button onClick={fetchProjects} className="retry-btn">Retry</button>
+        </div>
       </div>
     );
   }
