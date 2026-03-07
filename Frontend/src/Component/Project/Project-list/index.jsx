@@ -5,7 +5,7 @@ function Project_list({ projects, onDeleteProject, onEditProject }) {
   return (
     <div className="pro-list-container">
       {projects.map((project) => (
-        <div className="pro-card" key={project.id}>
+        <div className="pro-card" key={project._id}>
           <article>
             <div className="action-buttons">
               <button
@@ -17,7 +17,7 @@ function Project_list({ projects, onDeleteProject, onEditProject }) {
               </button>
               <button
                 className="delete-btn"
-                onClick={() => onDeleteProject(project.id)}
+                onClick={() => onDeleteProject(project._id)}
                 title="Delete project"
               >
                 <i className="bi bi-trash"></i>
