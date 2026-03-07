@@ -1,120 +1,77 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./index.scss";
 import Project_list from "./Project-list";
 import AddProjectModal from "./AddProjectModal";
+import * as api from "../../Services/api";
 
 function Project() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(0);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const ITEMS_PER_PAGE = 6; // 2 rows x 3 columns
 
-  const [projects, setProjects] = useState([
-    {
-      id: 1,
-      title: "AI Chat Assistant",
-      description:
-        "A conversational AI chatbot built with OpenAI's API, featuring real-time streaming responses and context-aware dialogue.",
-      category: "AI",
-      techStack: ["React", "Next.js", "OpenAI", "Tailwind CSS"],
-      image:
-        "https://www.ilink-digital.com/wp-content/uploads/2023/05/Conversation-between-chat-bot-on-screen-of-phone-and-customer-scaled.jpg",
-      githubLink: "",
-      liveDemoLink: "",
-    },
-    {
-      id: 2,
-      title: "Analytics Dashboard",
-      description:
-        "A comprehensive analytics dashboard with real-time data visualization, custom charts, and interactive reporting tools.",
-      category: "Technical",
-      techStack: ["React", "D3.js", "Node.js", "MongoDB"],
-      image:
-        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800",
-      githubLink: "",
-      liveDemoLink: "",
-    },
-    {
-      id: 3,
-      title: "E-commerce Platform",
-      description:
-        "A modern online shopping platform with cart management, payment integration, and order tracking capabilities.",
-      category: "Technical",
-      techStack: ["Vue.js", "Stripe", "PostgreSQL", "SCSS"],
-      image:
-        "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800",
-      githubLink: "",
-      liveDemoLink: "",
-    },
-    {
-      id: 4,
-      title: "Task Manager App",
-      description:
-        "A collaborative task management app with drag-and-drop interface, team collaboration, and deadline tracking.",
-      category: "Personal",
-      techStack: ["React", "Firebase", "Material-UI"],
-      image:
-        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
-      githubLink: "",
-      liveDemoLink: "",
-    },
-    {
-      id: 5,
-      title: "Online Code Editor",
-      description:
-        "A browser-based code editor with syntax highlighting, live preview, and multi-language support.",
-      category: "Technical",
-      techStack: ["TypeScript", "Monaco Editor", "Express"],
-      image: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=800",
-      githubLink: "",
-      liveDemoLink: "",
-    },
-    {
-      id: 6,
-      title: "Music Streaming App",
-      description:
-        "A beautiful music streaming application with playlist management, audio visualization, and social sharing features.",
-      category: "Personal",
-      techStack: ["React Native", "Spotify API", "Redux"],
-      image:
-        "https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=800",
-      githubLink: "",
-      liveDemoLink: "",
-    },
-  ]);
+  // Fetch projects from API when component mounts
+  useEffect(() => {
+    fetchProjects();
+  }, []);
 
-  const addProject = (newProjectData) => {
-    if (editingProject) {
-      // Edit existing project
-      setProjects(
-        projects.map((project) =>
-          project.id === editingProject.id
-            ? {
-                ...project,
-                ...newProjectData,
-                techStack: newProjectData.techStack
-                  .split(",")
-                  .map((tech) => tech.trim()),
-                image: newProjectData.image || project.image,
-              }
-            : project,
-        ),
-      );
-      setEditingProject(null);
-    } else {
-      // Add new project
-      const newProject = {
-        id: projects.length + 1,
-        ...newProjectData,
-        techStack: newProjectData.techStack
-          .split(",")
-          .map((tech) => tech.trim()),
-        image:
-          newProjectData.image ||
-          "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800",
-      };
-      setProjects([newProject, ...projects]);
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getProjects();
+      setProjects(data);
+      setError(null);
+    } catch (err) {
+      setError("Failed to load projects");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addProject = async (newProjectData) => {
+    try {
+      if (editingProject) {
+        // Edit existing project
+        const updatedData = {
+          ...newProjectData,
+          techStack:
+            typeof newProjectData.techStack === "string"
+              ? newProjectData.techStack.split(",").map((tech) => tech.trim())
+              : newProjectData.techStack,
+        };
+        const updated = await api.updateProject(
+          editingProject._id,
+          updatedData,
+        );
+        setProjects(
+          projects.map((project) =>
+            project._id === editingProject._id ? updated : project,
+          ),
+        );
+        setEditingProject(null);
+      } else {
+        // Add new project
+        const projectToCreate = {
+          ...newProjectData,
+          techStack:
+            typeof newProjectData.techStack === "string"
+              ? newProjectData.techStack.split(",").map((tech) => tech.trim())
+              : newProjectData.techStack,
+          image:
+            newProjectData.image ||
+            "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800",
+        };
+        const created = await api.createProject(projectToCreate);
+        setProjects([created, ...projects]);
+      }
+    } catch (err) {
+      console.error("Failed to save project:", err);
+      alert("Failed to save project. Please try again.");
     }
   };
 
@@ -123,8 +80,14 @@ function Project() {
     setIsModalOpen(true);
   };
 
-  const deleteProject = (projectId) => {
-    setProjects(projects.filter((project) => project.id !== projectId));
+  const deleteProject = async (projectId) => {
+    try {
+      await api.deleteProject(projectId);
+      setProjects(projects.filter((project) => project._id !== projectId));
+    } catch (err) {
+      console.error("Failed to delete project:", err);
+      alert("Failed to delete project. Please try again.");
+    }
   };
 
   const filteredProjects =
@@ -149,6 +112,23 @@ function Project() {
   const handleNextPage = () => {
     setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1));
   };
+
+  if (loading) {
+    return (
+      <div className="project-container">
+        <div className="loading">Loading projects...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="project-container">
+        <div className="error">{error}</div>
+        <button onClick={fetchProjects}>Retry</button>
+      </div>
+    );
+  }
 
   return (
     <div className="project-container">
