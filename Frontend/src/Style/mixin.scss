@@ -1,3 +1,15 @@
 @mixin padding-page {
   padding: 25px 100px;
+
+  @media (max-width: 1024px) {
+    padding: 20px 40px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 15px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+  }
 }
