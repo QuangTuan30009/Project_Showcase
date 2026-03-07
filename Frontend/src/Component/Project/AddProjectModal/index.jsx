@@ -52,6 +52,14 @@ function AddProjectModal({ isOpen, onClose, onAddProject, editProject }) {
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Check file size (limit to 5MB to ensure base64 fits in 10MB payload)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        alert('Image is too large! Please choose an image smaller than 5MB or use an image URL instead.');
+        e.target.value = ''; // Reset file input
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result;
