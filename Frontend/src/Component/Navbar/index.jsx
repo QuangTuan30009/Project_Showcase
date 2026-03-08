@@ -36,7 +36,11 @@ function Navbar({ onHome, onProject, onAbout, isDarkMode, onToggleTheme }) {
               About
             </li>
           </ul>
-          <button className="theme-toggle" onClick={onToggleTheme} title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+          <button
+            className="theme-toggle"
+            onClick={onToggleTheme}
+            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
             {isDarkMode ? (
               <i className="bi bi-sun-fill"></i>
             ) : (

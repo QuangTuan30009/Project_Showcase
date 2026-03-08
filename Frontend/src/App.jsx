@@ -50,13 +50,10 @@ function App() {
           }
         />
       </div>
-      <div ref={projectref}>
-        {/* Project section sẽ ở đây */}
-        <h2 style={{ padding: "50px", textAlign: "center" }}>
-        </h2>
-      </div>
 
-      <Project />
+      <div ref={projectref}>
+        <Project />
+      </div>
       <div ref={aboutref}>
         <About
           onProject={() =>
