@@ -16,7 +16,8 @@
     padding-bottom: 20px;
     font-weight: 500;
     text-transform: uppercase;
-    color: #b8794e;
+    color: var(--accent-primary);
+    transition: color 0.3s ease;
 
     @media (max-width: 480px) {
       font-size: 12px;
@@ -32,8 +33,9 @@
     align-items: center;
     text-align: center;
     font-family: "Playfair Display", Georgia, serif;
-    color: #2d2d2d;
+    color: var(--text-primary);
     line-height: 1.2;
+    transition: color 0.3s ease;
 
     @media (max-width: 768px) {
       font-size: 36px;
@@ -53,7 +55,8 @@
     font-size: 18px;
     padding-top: 25px;
     line-height: 1.6;
-    color: #6b6b6b;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
 
     @media (max-width: 1024px) {
       padding: 0 100px;
@@ -91,8 +94,8 @@
       align-items: center;
       gap: 10px;
       padding: 14px 28px;
-      background-color: #a67c52;
-      color: white;
+      background-color: var(--accent-primary);
+      color: var(--bg-primary);
       border: none;
       border-radius: 50px;
       font-size: 12px;
@@ -106,7 +109,7 @@
       }
 
       &:hover {
-        background-color: #8f6842;
+        background-color: var(--accent-secondary);
         transform: translateY(-2px);
       }
     }
@@ -117,8 +120,8 @@
       gap: 10px;
       padding: 14px 28px;
       background-color: transparent;
-      color: #2d2d2d;
-      border: 2px solid #d4d4d4;
+      color: var(--text-primary);
+      border: 2px solid var(--border-color);
       border-radius: 50px;
       font-size: 12px;
       font-weight: 700;
@@ -132,8 +135,8 @@
       }
 
       &:hover {
-        border-color: #a67c52;
-        color: #a67c52;
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
         transform: translateY(-2px);
       }
     }

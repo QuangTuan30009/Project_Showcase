@@ -15,9 +15,10 @@
     span {
       font-size: 14px;
       font-weight: 500;
-      color: #a67c52;
+      color: var(--accent-primary);
       letter-spacing: 2px;
       text-transform: uppercase;
+      transition: color 0.3s ease;
 
       @media (max-width: 480px) {
         font-size: 12px;
@@ -29,10 +30,11 @@
     h1 {
       font-size: 52px;
       font-weight: 400;
-      color: #2d2d2d;
+      color: var(--text-primary);
       text-align: center;
       margin: 0;
       font-family: "Playfair Display", serif;
+      transition: color 0.3s ease;
 
       @media (max-width: 768px) {
         font-size: 36px;
@@ -47,11 +49,12 @@
   .pro-content {
     p {
       font-size: 18px;
-      color: #6b6b6b;
+      color: var(--text-secondary);
       text-align: center;
       line-height: 1.6;
       margin: 0;
       max-width: 650px;
+      transition: color 0.3s ease;
 
       @media (max-width: 768px) {
         font-size: 16px;
@@ -74,8 +77,9 @@
       left: 20px;
       top: 50%;
       transform: translateY(-50%);
-      color: #999;
+      color: var(--text-muted);
       font-size: 18px;
+      transition: color 0.3s ease;
 
       @media (max-width: 480px) {
         font-size: 16px;
@@ -86,12 +90,13 @@
     input {
       width: 100%;
       padding: 16px 20px 16px 50px;
-      border: 1px solid #e0e0e0;
+      border: 1px solid var(--border-color);
       border-radius: 50px;
       font-size: 16px;
       outline: none;
       transition: all 0.3s ease;
-      background-color: #fafafa;
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
 
       @media (max-width: 480px) {
         padding: 12px 15px 12px 45px;
@@ -99,13 +104,12 @@
       }
 
       &::placeholder {
-        color: #999;
+        color: var(--text-muted);
       }
 
       &:focus {
-        // border-color: #a67c52;
-        border: 3px solid #a67c52;
-        background-color: #fff;
+        border: 3px solid var(--accent-primary);
+        background-color: var(--bg-secondary);
       }
     }
   }
@@ -122,9 +126,9 @@
 
     button {
       padding: 8px 15px;
-      background-color: #f1ebeb;
-      color: #333;
-      border: none;
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
       border-radius: 20px;
       font-size: 14px;
       gap: 15px;
@@ -137,8 +141,9 @@
       }
 
       &:hover {
-        background-color: #a67c52;
-        color: #fff;
+        background-color: var(--accent-primary);
+        color: var(--bg-primary);
+        border-color: var(--accent-primary);
         transform: translateY(-2px);
       }
 
@@ -147,8 +152,9 @@
       }
 
       &.active {
-        background-color: #a67c52;
-        color: #fff;
+        background-color: var(--accent-primary);
+        color: var(--bg-primary);
+        border-color: var(--accent-primary);
         font-weight: 600;
       }
     }
@@ -168,10 +174,9 @@
       align-items: center;
       gap: 5px;
       padding: 10px 15px;
-      background-color: #a67c52;
-      color: #fff;
-      // font-style: unset;
-      border: 1px solid #a67c52;
+      background-color: var(--accent-primary);
+      color: var(--bg-primary);
+      border: 1px solid var(--accent-primary);
       border-radius: 50px;
       font-size: 13px;
       font-weight: 800;
@@ -192,7 +197,8 @@
       }
 
       &:hover {
-        background-color: #8b5e3c;
+        background-color: var(--accent-secondary);
+        border-color: var(--accent-secondary);
         transform: scale(1.05);
       }
 
@@ -219,8 +225,8 @@
       width: 48px;
       height: 48px;
       border-radius: 50%;
-      border: 2px solid #e0e0e0;
-      background-color: #fff;
+      border: 2px solid var(--border-color);
+      background-color: var(--bg-secondary);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -234,7 +240,7 @@
 
       i {
         font-size: 20px;
-        color: #2d2d2d;
+        color: var(--text-primary);
         transition: color 0.3s ease;
 
         @media (max-width: 480px) {
@@ -243,12 +249,12 @@
       }
 
       &:hover:not(:disabled) {
-        border-color: #a67c52;
-        background-color: #a67c52;
+        border-color: var(--accent-primary);
+        background-color: var(--accent-primary);
         transform: scale(1.05);
 
         i {
-          color: #fff;
+          color: var(--bg-primary);
         }
       }
 
@@ -265,9 +271,10 @@
     .page-info {
       font-size: 16px;
       font-weight: 600;
-      color: #2d2d2d;
+      color: var(--text-primary);
       min-width: 60px;
       text-align: center;
+      transition: color 0.3s ease;
 
       @media (max-width: 480px) {
         font-size: 14px;

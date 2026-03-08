@@ -1,5 +1,37 @@
 @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap");
 
+:root {
+  /* Light Mode Colors */
+  --bg-primary: #f5f1e8;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #fafafa;
+  --text-primary: #2d2d2d;
+  --text-secondary: #6b6b6b;
+  --text-muted: #999;
+  --accent-primary: #a67c52;
+  --accent-secondary: #c89b5c;
+  --border-color: #e0e0e0;
+  --card-bg: #ffffff;
+  --card-shadow: rgba(0, 0, 0, 0.08);
+  --navbar-bg: #f5f1e8;
+}
+
+[data-theme="dark"] {
+  /* Dark Mode Colors */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #242424;
+  --bg-tertiary: #2a2a2a;
+  --text-primary: #e5e5e5;
+  --text-secondary: #a0a0a0;
+  --text-muted: #6b6b6b;
+  --accent-primary: #c89b5c;
+  --accent-secondary: #d4a574;
+  --border-color: #3a3a3a;
+  --card-bg: #242424;
+  --card-shadow: rgba(0, 0, 0, 0.3);
+  --navbar-bg: #1a1a1a;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -13,6 +45,8 @@
 }
 
 body {
-  background-color: #f5f1e8;
-  padding-top: 70px; /* Để tránh navbar fixed che content */
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  padding-top: 70px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }

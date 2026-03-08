@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./index.scss";
-function Navbar({ onHome, onProject, onAbout }) {
+function Navbar({ onHome, onProject, onAbout, isDarkMode, onToggleTheme }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleMenuClick = (callback) => {
@@ -13,7 +13,7 @@ function Navbar({ onHome, onProject, onAbout }) {
       <div className="navbar-container">
         <div className="navbar_logo">
           <i className="fa-solid fa-code"></i>
-          <h2>Project Showcase</h2>
+          <h2>ProjectShowcase</h2>
         </div>
         <div className="navbar_menu">
           <ul className="navbar_menu_list">
@@ -36,6 +36,13 @@ function Navbar({ onHome, onProject, onAbout }) {
               About
             </li>
           </ul>
+          <button className="theme-toggle" onClick={onToggleTheme} title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+            {isDarkMode ? (
+              <i className="bi bi-sun-fill"></i>
+            ) : (
+              <i className="bi bi-moon-stars-fill"></i>
+            )}
+          </button>
         </div>
       </div>
     </div>

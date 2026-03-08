@@ -10,8 +10,9 @@
   top: 0;
   left: 0;
   right: 0;
-  background-color: #f5f1e8;
+  background-color: var(--navbar-bg);
   z-index: 100;
+  transition: background-color 0.3s ease;
 
   .navbar_logo {
     display: flex;
@@ -20,7 +21,8 @@
 
     i {
       font-size: 24px;
-      color: #2d2d2d;
+      color: var(--text-primary);
+      transition: color 0.3s ease;
 
       @media (max-width: 480px) {
         font-size: 20px;
@@ -30,7 +32,8 @@
     h2 {
       font-size: 20px;
       font-weight: 600;
-      color: #2d2d2d;
+      color: var(--text-primary);
+      transition: color 0.3s ease;
 
       @media (max-width: 768px) {
         font-size: 18px;
@@ -43,6 +46,10 @@
   }
 
   .navbar_menu {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+
     .navbar_menu_list {
       display: flex;
       gap: 40px;
@@ -59,7 +66,7 @@
       li {
         font-size: 16px;
         font-weight: 500;
-        color: #6b6b6b;
+        color: var(--text-secondary);
         cursor: pointer;
         transition: color 0.3s ease;
 
@@ -72,8 +79,46 @@
         }
 
         &:hover {
-          color: #a67c52;
+          color: var(--accent-primary);
         }
+      }
+    }
+
+    .theme-toggle {
+      background: none;
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: var(--accent-primary);
+
+      @media (max-width: 480px) {
+        width: 35px;
+        height: 35px;
+      }
+
+      i {
+        font-size: 18px;
+
+        @media (max-width: 480px) {
+          font-size: 16px;
+        }
+      }
+
+      &:hover {
+        background-color: var(--accent-primary);
+        color: var(--bg-primary);
+        border-color: var(--accent-primary);
+        transform: rotate(15deg);
+      }
+
+      &:active {
+        transform: rotate(15deg) scale(0.95);
       }
     }
   }

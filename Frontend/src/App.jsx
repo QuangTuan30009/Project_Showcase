@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import "./App.css";
 import Navbar from "./Component/Navbar";
 import Hero_section from "./Component/Hero-section";
@@ -9,6 +9,28 @@ function App() {
   const homeref = useRef(null);
   const projectref = useRef(null);
   const aboutref = useRef(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    // Load theme preference from localStorage
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      setIsDarkMode(true);
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    if (newTheme) {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      localStorage.setItem("theme", "light");
+    }
+  };
 
   return (
     <div>
@@ -18,6 +40,8 @@ function App() {
           projectref.current.scrollIntoView({ behavior: "smooth" })
         }
         onAbout={() => aboutref.current.scrollIntoView({ behavior: "smooth" })}
+        isDarkMode={isDarkMode}
+        onToggleTheme={toggleTheme}
       />
       <div ref={homeref}>
         <Hero_section
