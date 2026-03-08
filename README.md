@@ -23,6 +23,7 @@ A modern, full-stack portfolio showcase web application built with React, Expres
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **React** 19.2.0 - UI library
 - **Vite** 7.3.1 - Build tool
 - **Axios** 1.13.6 - HTTP client
@@ -30,6 +31,7 @@ A modern, full-stack portfolio showcase web application built with React, Expres
 - **Bootstrap Icons** - Icon library
 
 ### Backend
+
 - **Node.js** - Runtime environment
 - **Express** 5.2.1 - Web framework
 - **MongoDB** 9.2.4 - Database driver
@@ -38,6 +40,7 @@ A modern, full-stack portfolio showcase web application built with React, Expres
 - **dotenv** 17.3.1 - Environment variables management
 
 ### Deployment
+
 - **Vercel** - Frontend hosting
 - **Render** - Backend hosting (Free tier)
 - **MongoDB Atlas** - Cloud database
@@ -45,6 +48,7 @@ A modern, full-stack portfolio showcase web application built with React, Expres
 ## 📦 Installation
 
 ### Prerequisites
+
 - Node.js (v16 or higher)
 - npm or yarn
 - MongoDB Atlas account (or local MongoDB)
@@ -52,16 +56,19 @@ A modern, full-stack portfolio showcase web application built with React, Expres
 ### Backend Setup
 
 1. Navigate to Backend folder:
+
 ```bash
 cd Backend
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Create `.env` file:
+
 ```env
 MONGODB_URI=your_mongodb_connection_string
 PORT=5000
@@ -69,11 +76,13 @@ NODE_ENV=development
 ```
 
 4. (Optional) Migrate sample data:
+
 ```bash
 node migrate.js
 ```
 
 5. Start the server:
+
 ```bash
 npm start
 ```
@@ -83,25 +92,29 @@ Backend will run on `http://localhost:5000`
 ### Frontend Setup
 
 1. Navigate to Frontend folder:
+
 ```bash
 cd Frontend
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Update API URL in `src/Services/api.js` if needed:
+
 ```javascript
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // For local development
+  baseURL: "http://localhost:5000/api", // For local development
   // baseURL: 'https://project-showcase-tg3m.onrender.com/api', // For production
   timeout: 60000,
 });
 ```
 
 4. Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -145,15 +158,16 @@ Project_Son/Show-case/
 
 ### Projects
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/projects` | Get all projects |
-| GET | `/api/projects/:id` | Get project by ID |
-| POST | `/api/projects` | Create new project |
-| PUT | `/api/projects/:id` | Update project |
-| DELETE | `/api/projects/:id` | Delete project |
+| Method | Endpoint            | Description        |
+| ------ | ------------------- | ------------------ |
+| GET    | `/api/projects`     | Get all projects   |
+| GET    | `/api/projects/:id` | Get project by ID  |
+| POST   | `/api/projects`     | Create new project |
+| PUT    | `/api/projects/:id` | Update project     |
+| DELETE | `/api/projects/:id` | Delete project     |
 
 ### Request Body Example (POST/PUT)
+
 ```json
 {
   "title": "My Awesome Project",
@@ -215,6 +229,7 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 👨‍💻 Author
 
 **Ta Quang Tuan**
+
 - GitHub: [@QuangTuan30009](https://github.com/QuangTuan30009)
 - Project Repository: [Project_Showcase](https://github.com/QuangTuan30009/Project_Showcase)
 

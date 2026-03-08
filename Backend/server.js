@@ -9,18 +9,20 @@ const dns = require("node:dns");
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
 // CORS configuration
-app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://project-showcase-phi.vercel.app'
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://project-showcase-phi.vercel.app",
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 
-app.use(express.json({ limit: '10mb' })); // Increase payload limit
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.json({ limit: "10mb" })); // Increase payload limit
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // Connect to MongoDB
 mongoose

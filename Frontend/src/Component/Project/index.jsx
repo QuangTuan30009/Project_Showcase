@@ -12,6 +12,7 @@ function Project() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const ITEMS_PER_PAGE = 6; // 2 rows x 3 columns
 
   // Fetch projects from API when component mounts
@@ -90,10 +91,22 @@ function Project() {
     }
   };
 
-  const filteredProjects =
-    selectedCategory === "All"
-      ? projects
-      : projects.filter((project) => project.category === selectedCategory);
+  const filteredProjects = projects.filter((project) => {
+    // Filter by category
+    const matchesCategory =
+      selectedCategory === "All" || project.category === selectedCategory;
+
+    // Filter by search term
+    const matchesSearch =
+      searchTerm === "" ||
+      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.techStack.some((tech) =>
+        tech.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+
+    return matchesCategory && matchesSearch;
+  });
 
   const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE);
   const startIndex = currentPage * ITEMS_PER_PAGE;
@@ -103,6 +116,11 @@ function Project() {
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
     setCurrentPage(0); // Reset to first page when category changes
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(0); // Reset to first page when search changes
   };
 
   const handlePrevPage = () => {
@@ -119,7 +137,9 @@ function Project() {
         <div className="loading">
           <div className="spinner"></div>
           <p>Loading projects...</p>
-          <p className="loading-hint">First load may take 20-30 seconds as the server wakes up</p>
+          <p className="loading-hint">
+            First load may take 20-30 seconds as the server wakes up
+          </p>
         </div>
       </div>
     );
@@ -130,8 +150,12 @@ function Project() {
       <div className="project-container">
         <div className="error">
           <p>{error}</p>
-          <p className="error-hint">The server might be waking up. Please try again.</p>
-          <button onClick={fetchProjects} className="retry-btn">Retry</button>
+          <p className="error-hint">
+            The server might be waking up. Please try again.
+          </p>
+          <button onClick={fetchProjects} className="retry-btn">
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -156,6 +180,8 @@ function Project() {
         <input
           type="text"
           placeholder="Search projects by title or keyword..."
+          value={searchTerm}
+          onChange={handleSearchChange}
         />
       </div>
 

@@ -7,8 +7,8 @@ const api = axios.create({
   baseURL: API_URL,
   timeout: 60000, // 60 seconds for backend cold start
   headers: {
-    'Content-Type': 'application/json'
-  }
+    "Content-Type": "application/json",
+  },
 });
 
 // Retry helper function
@@ -16,9 +16,12 @@ const retryRequest = async (requestFn, retries = 2) => {
   try {
     return await requestFn();
   } catch (error) {
-    if (retries > 0 && (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK')) {
+    if (
+      retries > 0 &&
+      (error.code === "ECONNABORTED" || error.code === "ERR_NETWORK")
+    ) {
       console.log(`Retrying... (${retries} attempts left)`);
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s before retry
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2s before retry
       return retryRequest(requestFn, retries - 1);
     }
     throw error;
@@ -28,7 +31,7 @@ const retryRequest = async (requestFn, retries = 2) => {
 // Get all projects
 export const getProjects = async () => {
   return retryRequest(async () => {
-    const response = await api.get('/projects');
+    const response = await api.get("/projects");
     return response.data;
   });
 };
@@ -44,7 +47,7 @@ export const getProject = async (id) => {
 // Create new project
 export const createProject = async (projectData) => {
   return retryRequest(async () => {
-    const response = await api.post('/projects', projectData);
+    const response = await api.post("/projects", projectData);
     return response.data;
   });
 };
