@@ -1,26 +1,26 @@
-# 🚀 Project Showcase
+#  Project Showcase
 
 A modern, full-stack portfolio showcase web application built with React, Express, and MongoDB. Display and manage your projects beautifully with a responsive, user-friendly interface.
 
 ![Project Showcase](https://img.shields.io/badge/Status-Live-brightgreen) ![React](https://img.shields.io/badge/React-19.2.0-blue) ![Node](https://img.shields.io/badge/Node-Express-green) ![MongoDB](https://img.shields.io/badge/Database-MongoDB-success)
 
-## 🌐 Live Demo
+##  Live Demo
 
 **Frontend**: [https://project-showcase-phi.vercel.app](https://project-showcase-phi.vercel.app)  
 **Backend API**: [https://project-showcase-tg3m.onrender.com](https://project-showcase-tg3m.onrender.com)
 
-## ✨ Features
+##  Features
 
-- 📱 **Fully Responsive Design** - Works seamlessly on desktop, tablet, and mobile devices
-- 🎨 **Modern UI/UX** - Clean and intuitive interface with smooth animations
-- 🔍 **Search & Filter** - Find projects quickly by category or keywords
-- 📄 **Pagination** - Browse through projects with easy navigation
-- ➕ **CRUD Operations** - Add, edit, and delete projects with modal forms
-- 🖼️ **Image Upload** - Support both URL and file upload (max 5MB)
-- ⚡ **Fast Loading** - Optimized performance with retry logic for API calls
-- 🔄 **Auto-deployment** - Automatic deployment on push to GitHub
+-  **Fully Responsive Design** - Works seamlessly on desktop, tablet, and mobile devices
+-  **Modern UI/UX** - Clean and intuitive interface with smooth animations
+-  **Search & Filter** - Find projects quickly by category or keywords
+-  **Pagination** - Browse through projects with easy navigation
+-  **CRUD Operations** - Add, edit, and delete projects with modal forms
+-  **Image Upload** - Support both URL and file upload (max 5MB)
+-  **Fast Loading** - Optimized performance with retry logic for API calls
+-  **Auto-deployment** - Automatic deployment on push to GitHub
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 ### Frontend
 
@@ -45,7 +45,7 @@ A modern, full-stack portfolio showcase web application built with React, Expres
 - **Render** - Backend hosting (Free tier)
 - **MongoDB Atlas** - Cloud database
 
-## 📦 Installation
+##  Installation
 
 ### Prerequisites
 
@@ -121,7 +121,7 @@ npm run dev
 
 Frontend will run on `http://localhost:5173`
 
-## 🗂️ Project Structure
+##  Project Structure
 
 ```
 Project_Son/Show-case/
@@ -154,7 +154,7 @@ Project_Son/Show-case/
 └── README.md
 ```
 
-## 🔧 API Endpoints
+##  API Endpoints
 
 ### Projects
 
@@ -180,7 +180,7 @@ Project_Son/Show-case/
 }
 ```
 
-## 🚀 Deployment
+##  Deployment
 
 ### Backend (Render)
 
@@ -201,20 +201,20 @@ Project_Son/Show-case/
 
 Auto-deployment is enabled - push to `main` branch triggers automatic updates.
 
-## 📱 Responsive Breakpoints
+##  Responsive Breakpoints
 
 - **Desktop**: > 1024px (3 column grid)
 - **Tablet**: 768px - 1024px (2 column grid)
 - **Mobile**: < 768px (1 column grid)
 
-## ⚠️ Important Notes
+##  Important Notes
 
 - **Free Tier Sleep**: Render Free tier sleeps after 15 minutes of inactivity. First load may take 20-30 seconds.
 - **Image Size Limit**: Maximum 5MB for file uploads. For larger images, use image URLs instead.
 - **Payload Limit**: Backend supports up to 10MB payload for base64-encoded images.
 - **MongoDB Atlas**: May require DNS configuration (8.8.8.8, 1.1.1.1) on some networks.
 
-## 🤝 Contributing
+##  Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
@@ -226,14 +226,14 @@ Auto-deployment is enabled - push to `main` branch triggers automatic updates.
 
 This project is open source and available under the [MIT License](LICENSE).
 
-## 👨‍💻 Author
+##  Author
 
 **Ta Quang Tuan**
 
 - GitHub: [@QuangTuan30009](https://github.com/QuangTuan30009)
 - Project Repository: [Project_Showcase](https://github.com/QuangTuan30009/Project_Showcase)
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - Icons by [Bootstrap Icons](https://icons.getbootstrap.com/)
 - Deployed with [Vercel](https://vercel.com) and [Render](https://render.com)
