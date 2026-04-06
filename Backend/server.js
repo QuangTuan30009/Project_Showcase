@@ -36,7 +36,17 @@ mongoose
 // GET all projects
 app.get("/api/projects", async (req, res) => {
   try {
-    const projects = await Project.find().sort({ createdAt: -1 });
+    const includeHidden = req.query.includeHidden === "true";
+    const filter = includeHidden
+      ? {}
+      : {
+          $or: [
+            { moderationStatus: "approved" },
+            { moderationStatus: { $exists: false } },
+            { moderationStatus: null },
+          ],
+        };
+    const projects = await Project.find(filter).sort({ createdAt: -1 });
     res.json(projects);
   } catch (error) {
     console.error(error);
@@ -61,7 +71,11 @@ app.get("/api/projects/:id", async (req, res) => {
 // POST new project
 app.post("/api/projects", async (req, res) => {
   try {
-    const project = new Project(req.body);
+    const payload = {
+      ...req.body,
+      moderationStatus: req.body.moderationStatus || "pending",
+    };
+    const project = new Project(payload);
     await project.save();
     res.status(201).json(project);
   } catch (error) {
@@ -73,7 +87,13 @@ app.post("/api/projects", async (req, res) => {
 // PUT update project
 app.put("/api/projects/:id", async (req, res) => {
   try {
-    const project = await Project.findByIdAndUpdate(req.params.id, req.body, {
+    const payload = { ...req.body };
+
+    if (payload.moderationStatus) {
+      payload.reviewedAt = new Date();
+    }
+
+    const project = await Project.findByIdAndUpdate(req.params.id, payload, {
       new: true,
       runValidators: true,
     });
@@ -84,6 +104,32 @@ app.put("/api/projects/:id", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to update project" });
+  }
+});
+
+// PATCH moderation status
+app.patch("/api/projects/:id/moderation", async (req, res) => {
+  try {
+    const { moderationStatus, moderationNote } = req.body;
+    const payload = {
+      moderationStatus,
+      moderationNote: moderationNote || "",
+      reviewedAt: new Date(),
+    };
+
+    const project = await Project.findByIdAndUpdate(req.params.id, payload, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    res.json(project);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to update moderation status" });
   }
 });
 
