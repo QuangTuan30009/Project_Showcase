@@ -22,7 +22,8 @@ const projectSchema = new mongoose.Schema(
     },
     image: {
       type: String,
-      default: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800",
+      default:
+        "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800",
     },
     githubLink: {
       type: String,
@@ -32,10 +33,22 @@ const projectSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    moderationStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "approved",
+    },
+    moderationNote: {
+      type: String,
+      default: "",
+    },
+    reviewedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true, // Tự động thêm createdAt, updatedAt
-  }
+  },
 );
 
 module.exports = mongoose.model("Project", projectSchema);
