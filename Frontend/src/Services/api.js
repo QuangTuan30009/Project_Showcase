@@ -11,6 +11,19 @@ const api = axios.create({
   },
 });
 
+const toQueryString = (params = {}) => {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      query.set(key, value);
+    }
+  });
+
+  const queryString = query.toString();
+  return queryString ? `?${queryString}` : "";
+};
+
 // Retry helper function
 const retryRequest = async (requestFn, retries = 2) => {
   try {
@@ -29,9 +42,11 @@ const retryRequest = async (requestFn, retries = 2) => {
 };
 
 // Get all projects
-export const getProjects = async () => {
+export const getProjects = async ({ includeHidden = false } = {}) => {
   return retryRequest(async () => {
-    const response = await api.get("/projects");
+    const response = await api.get(
+      `/projects${toQueryString({ includeHidden: includeHidden ? "true" : undefined })}`,
+    );
     return response.data;
   });
 };
@@ -47,7 +62,10 @@ export const getProject = async (id) => {
 // Create new project
 export const createProject = async (projectData) => {
   return retryRequest(async () => {
-    const response = await api.post("/projects", projectData);
+    const response = await api.post("/projects", {
+      ...projectData,
+      moderationStatus: projectData.moderationStatus || "pending",
+    });
     return response.data;
   });
 };
@@ -56,6 +74,17 @@ export const createProject = async (projectData) => {
 export const updateProject = async (id, projectData) => {
   return retryRequest(async () => {
     const response = await api.put(`/projects/${id}`, projectData);
+    return response.data;
+  });
+};
+
+// Update moderation status
+export const updateProjectModeration = async (id, moderationData) => {
+  return retryRequest(async () => {
+    const response = await api.patch(
+      `/projects/${id}/moderation`,
+      moderationData,
+    );
     return response.data;
   });
 };
