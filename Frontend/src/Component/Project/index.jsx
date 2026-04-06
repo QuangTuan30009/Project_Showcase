@@ -6,7 +6,6 @@ import * as api from "../../Services/api";
 
 function Project() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(0);
   const [projects, setProjects] = useState([]);
@@ -36,58 +35,24 @@ function Project() {
 
   const addProject = async (newProjectData) => {
     try {
-      if (editingProject) {
-        // Edit existing project
-        const updatedData = {
-          ...newProjectData,
-          techStack:
-            typeof newProjectData.techStack === "string"
-              ? newProjectData.techStack.split(",").map((tech) => tech.trim())
-              : newProjectData.techStack,
-        };
-        const updated = await api.updateProject(
-          editingProject._id,
-          updatedData,
-        );
-        setProjects(
-          projects.map((project) =>
-            project._id === editingProject._id ? updated : project,
-          ),
-        );
-        setEditingProject(null);
-      } else {
-        // Add new project
-        const projectToCreate = {
-          ...newProjectData,
-          techStack:
-            typeof newProjectData.techStack === "string"
-              ? newProjectData.techStack.split(",").map((tech) => tech.trim())
-              : newProjectData.techStack,
-          image:
-            newProjectData.image ||
-            "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800",
-        };
-        const created = await api.createProject(projectToCreate);
+      const projectToCreate = {
+        ...newProjectData,
+        techStack:
+          typeof newProjectData.techStack === "string"
+            ? newProjectData.techStack.split(",").map((tech) => tech.trim())
+            : newProjectData.techStack,
+        image:
+          newProjectData.image ||
+          "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800",
+      };
+      const created = await api.createProject(projectToCreate);
+      if ((created.moderationStatus || "approved") === "approved") {
         setProjects([created, ...projects]);
       }
+      alert("Your project was submitted for review.");
     } catch (err) {
       console.error("Failed to save project:", err);
       alert("Failed to save project. Please try again.");
-    }
-  };
-
-  const editProject = (project) => {
-    setEditingProject(project);
-    setIsModalOpen(true);
-  };
-
-  const deleteProject = async (projectId) => {
-    try {
-      await api.deleteProject(projectId);
-      setProjects(projects.filter((project) => project._id !== projectId));
-    } catch (err) {
-      console.error("Failed to delete project:", err);
-      alert("Failed to delete project. Please try again.");
     }
   };
 
@@ -220,7 +185,6 @@ function Project() {
       <div className="button-add">
         <button
           onClick={() => {
-            setEditingProject(null);
             setIsModalOpen(true);
           }}
         >
@@ -229,11 +193,7 @@ function Project() {
         </button>
       </div>
 
-      <Project_list
-        projects={currentProjects}
-        onDeleteProject={deleteProject}
-        onEditProject={editProject}
-      />
+      <Project_list projects={currentProjects} />
 
       {totalPages > 1 && (
         <div className="pagination-controls">
@@ -261,10 +221,8 @@ function Project() {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setEditingProject(null);
         }}
         onAddProject={addProject}
-        editProject={editingProject}
       />
     </div>
   );
