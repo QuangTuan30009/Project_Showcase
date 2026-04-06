@@ -1,28 +1,12 @@
 import React from "react";
 import "./index.scss";
 
-function Project_list({ projects, onDeleteProject, onEditProject }) {
+function Project_list({ projects }) {
   return (
     <div className="pro-list-container">
       {projects.map((project) => (
         <div className="pro-card" key={project._id}>
           <article>
-            <div className="action-buttons">
-              <button
-                className="edit-btn"
-                onClick={() => onEditProject(project)}
-                title="Edit project"
-              >
-                <i className="bi bi-pencil"></i>
-              </button>
-              <button
-                className="delete-btn"
-                onClick={() => onDeleteProject(project._id)}
-                title="Delete project"
-              >
-                <i className="bi bi-trash"></i>
-              </button>
-            </div>
             <div className="img-artical">
               <img src={project.image} alt={project.title} />
             </div>
