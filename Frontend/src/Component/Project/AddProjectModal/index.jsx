@@ -171,7 +171,7 @@ function AddProjectModal({ isOpen, onClose, onAddProject, editProject }) {
               name="title"
               value={formData.title}
               onChange={handleChange}
-              placeholder="My Awesome Project"
+              placeholder="My Project"
               required
             />
           </div>
