@@ -55,7 +55,27 @@ A modern, full-stack portfolio showcase web application built with React, Expres
 
 ### Docker Setup (Recommended for first-time run)
 
-If you want to run full stack (Frontend + Backend + MongoDB) with one command:
+For anyone cloning this repo and running locally with Docker:
+
+```bash
+git clone https://github.com/QuangTuan30009/Project_Showcase.git
+cd Project_Showcase/Show-case
+docker compose up --build -d
+docker compose exec backend npm run migrate
+```
+
+Open:
+
+- Frontend: `http://localhost:8080`
+- Backend test endpoint: `http://localhost:5000/api/test`
+- Backend projects endpoint: `http://localhost:5000/api/projects`
+
+Notes:
+
+- If you skip `npm run migrate`, `/api/projects` may return an empty array.
+- `Cannot GET /` at `http://localhost:5000` is normal (backend only exposes `/api/...` routes).
+
+If you want to run full stack (Frontend + Backend + MongoDB) with one command only:
 
 1. Install Docker Desktop
 2. Open terminal in `Show-case` folder
