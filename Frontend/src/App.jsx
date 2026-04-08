@@ -5,12 +5,14 @@ import Hero_section from "./Component/Hero-section";
 import About from "./Component/About";
 import Project from "./Component/Project";
 import AdminDashboard from "./Component/AdminDashboard";
+import DataPage from "./Component/Data";
 
 function App() {
   const SECRET_ADMIN_CODE = "duyetbai123";
   const SECRET_ADMIN_OTP = "3009";
   const pathname = window.location.pathname;
   const isAdminRoute = pathname === "/admin-dashboard-hidden";
+  const isDataRoute = pathname === "/data";
   const homeref = useRef(null);
   const projectref = useRef(null);
   const aboutref = useRef(null);
@@ -25,7 +27,9 @@ function App() {
     const Swal = window.Swal;
 
     if (!Swal) {
-      return window.prompt("Nhập mã OTP 4 số để bật Admin Mode") === SECRET_ADMIN_OTP;
+      return (
+        window.prompt("Nhập mã OTP 4 số để bật Admin Mode") === SECRET_ADMIN_OTP
+      );
     }
 
     const result = await Swal.fire({
@@ -251,14 +255,34 @@ function App() {
     }
   };
 
-  return isAdminRoute ? (
-    <AdminDashboard
-      onBackToSite={() => {
-        window.history.pushState({}, "", "/");
-        window.location.reload();
-      }}
-    />
-  ) : (
+  if (isAdminRoute) {
+    return (
+      <AdminDashboard
+        onBackToSite={() => {
+          window.history.pushState({}, "", "/");
+          window.location.reload();
+        }}
+      />
+    );
+  }
+
+  if (isDataRoute) {
+    return (
+      <div>
+        <Navbar
+          onHome={() => window.location.assign("/")}
+          onProject={() => window.location.assign("/")}
+          onAbout={() => window.location.assign("/")}
+          onData={() => {}}
+          isDarkMode={isDarkMode}
+          onToggleTheme={toggleTheme}
+        />
+        <DataPage />
+      </div>
+    );
+  }
+
+  return (
     <div>
       {showAdminToast ? (
         <div className="admin-mode-toast" role="status" aria-live="polite">
@@ -275,6 +299,7 @@ function App() {
           projectref.current.scrollIntoView({ behavior: "smooth" })
         }
         onAbout={() => aboutref.current.scrollIntoView({ behavior: "smooth" })}
+        onData={() => window.location.assign("/data")}
         isDarkMode={isDarkMode}
         onToggleTheme={toggleTheme}
       />
