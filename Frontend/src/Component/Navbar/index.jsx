@@ -1,10 +1,19 @@
 import React, { useState } from "react";
 import "./index.scss";
-function Navbar({ onHome, onProject, onAbout, isDarkMode, onToggleTheme }) {
+function Navbar({
+  onHome,
+  onProject,
+  onAbout,
+  onData,
+  isDarkMode,
+  onToggleTheme,
+}) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleMenuClick = (callback) => {
-    callback();
+    if (typeof callback === "function") {
+      callback();
+    }
     setIsMenuOpen(false);
   };
 
@@ -34,6 +43,12 @@ function Navbar({ onHome, onProject, onAbout, isDarkMode, onToggleTheme }) {
               style={{ cursor: "pointer" }}
             >
               About
+            </li>
+            <li
+              onClick={() => handleMenuClick(onData)}
+              style={{ cursor: "pointer" }}
+            >
+              Data
             </li>
           </ul>
           <button
