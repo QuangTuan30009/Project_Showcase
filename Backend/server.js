@@ -17,18 +17,29 @@ const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim())
   : defaultOrigins;
 
+const isLocalDevOrigin = (origin = "") => {
+  return (
+    /^http:\/\/localhost:\d+$/.test(origin) ||
+    /^http:\/\/127\.0\.0\.1:\d+$/.test(origin)
+  );
+};
+
 // CORS configuration
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow non-browser requests that have no origin header.
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        isLocalDevOrigin(origin)
+      ) {
         return callback(null, true);
       }
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
