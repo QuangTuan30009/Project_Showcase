@@ -8,13 +8,25 @@ const app = express();
 const dns = require("node:dns");
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
+const defaultOrigins = [
+  "http://localhost:5173",
+  "http://localhost:8080",
+  "https://project-showcase-phi.vercel.app",
+];
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim())
+  : defaultOrigins;
+
 // CORS configuration
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://project-showcase-phi.vercel.app",
-    ],
+    origin: (origin, callback) => {
+      // Allow non-browser requests that have no origin header.
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],

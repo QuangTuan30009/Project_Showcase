@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_URL = "https://project-showcase-tg3m.onrender.com/api";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://project-showcase-tg3m.onrender.com/api";
 
 // Configure axios with longer timeout for cold starts
 const api = axios.create({
