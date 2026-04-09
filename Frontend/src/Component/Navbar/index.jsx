@@ -7,6 +7,7 @@ function Navbar({
   onData,
   isDarkMode,
   onToggleTheme,
+  variant = "default",
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -19,7 +20,9 @@ function Navbar({
 
   return (
     <div>
-      <div className="navbar-container">
+      <div
+        className={`navbar-container${variant === "data-ops" ? " data-ops" : ""}`}
+      >
         <div className="navbar_logo">
           <i className="fa-solid fa-code"></i>
           <h2>ProjectShowcase</h2>

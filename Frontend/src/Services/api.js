@@ -100,3 +100,51 @@ export const deleteProject = async (id) => {
     return response.data;
   });
 };
+
+// Get data setup
+export const getDataSetup = async () => {
+  return retryRequest(async () => {
+    const response = await api.get("/data/setup");
+    return response.data;
+  });
+};
+
+// Save data setup
+export const saveDataSetup = async (setupData) => {
+  return retryRequest(async () => {
+    const response = await api.put("/data/setup", setupData);
+    return response.data;
+  });
+};
+
+// Delete data setup and readings
+export const deleteDataSetup = async () => {
+  return retryRequest(async () => {
+    const response = await api.delete("/data/setup");
+    return response.data;
+  });
+};
+
+// Clear data readings only
+export const deleteDataReadings = async () => {
+  return retryRequest(async () => {
+    const response = await api.delete("/data/readings");
+    return response.data;
+  });
+};
+
+// Get recent data readings
+export const getDataReadings = async ({ limit = 500 } = {}) => {
+  return retryRequest(async () => {
+    const response = await api.get(`/data/readings${toQueryString({ limit })}`);
+    return response.data;
+  });
+};
+
+// Save a single data reading
+export const createDataReading = async (readingData) => {
+  return retryRequest(async () => {
+    const response = await api.post("/data/readings", readingData);
+    return response.data;
+  });
+};

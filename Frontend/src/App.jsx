@@ -276,6 +276,7 @@ function App() {
           onData={() => {}}
           isDarkMode={isDarkMode}
           onToggleTheme={toggleTheme}
+          variant="data-ops"
         />
         <DataPage />
       </div>

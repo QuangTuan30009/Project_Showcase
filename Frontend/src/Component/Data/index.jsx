@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Chart from "chart.js/auto";
+import {
+  createDataReading,
+  deleteDataReadings,
+  deleteDataSetup,
+  getDataReadings,
+  getDataSetup,
+  saveDataSetup,
+} from "../../Services/api";
 import "./index.scss";
 
 const STORAGE_KEY = "demoWeatherDataConfig:v1";
@@ -55,9 +63,285 @@ const formatLocalDateTimeInput = (date) => {
   return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
 };
 
+const normalizeSetupRecord = (record) => {
+  const fields = Array.isArray(record?.fields)
+    ? [...record.fields].slice(0, 8)
+    : createDefaultFields();
+
+  while (fields.length < 8) {
+    fields.push("");
+  }
+
+  return {
+    name: String(record?.name ?? ""),
+    description: String(record?.description ?? ""),
+    githubLink: String(record?.githubLink ?? ""),
+    deviceApiUrl: String(record?.deviceApiUrl ?? ""),
+    latitude:
+      record?.location?.latitude === null ||
+      record?.location?.latitude === undefined
+        ? ""
+        : String(record.location.latitude),
+    longitude:
+      record?.location?.longitude === null ||
+      record?.location?.longitude === undefined
+        ? ""
+        : String(record.location.longitude),
+    samplePeriodSec:
+      record?.samplePeriodSec === null || record?.samplePeriodSec === undefined
+        ? "2"
+        : String(record.samplePeriodSec),
+    fields,
+  };
+};
+
+const buildMockReading = (fieldNames, lastValues) => {
+  const values = {};
+
+  fieldNames.forEach((fieldName) => {
+    const prev = Number.isFinite(lastValues[fieldName])
+      ? lastValues[fieldName]
+      : 20 + Math.random() * 10;
+    const delta = (Math.random() - 0.5) * 1.2;
+    const next = Math.round((prev + delta) * 100) / 100;
+    values[fieldName] = next;
+  });
+
+  return {
+    timestamp: Date.now(),
+    values,
+  };
+};
+
+const normalizeDeviceReading = (payload, fieldNames) => {
+  const candidates = [];
+
+  if (Array.isArray(payload)) {
+    const lastItem = payload[payload.length - 1];
+    if (lastItem && typeof lastItem === "object") {
+      candidates.push(lastItem);
+    }
+  } else if (payload && typeof payload === "object") {
+    candidates.push(payload);
+    if (payload.data && typeof payload.data === "object") {
+      candidates.push(payload.data);
+    }
+    if (payload.values && typeof payload.values === "object") {
+      candidates.push(payload.values);
+    }
+  }
+
+  const source =
+    candidates.find((item) => item && typeof item === "object") || {};
+
+  const timestampSource =
+    source.timestamp ?? source.time ?? source.createdAt ?? source.ts;
+  const timestampValue = timestampSource
+    ? new Date(timestampSource).getTime()
+    : NaN;
+  const timestamp = Number.isFinite(timestampValue)
+    ? timestampValue
+    : Date.now();
+
+  const values = {};
+  fieldNames.forEach((fieldName) => {
+    const rawValue =
+      source[fieldName] ??
+      source.values?.[fieldName] ??
+      source.data?.[fieldName];
+    const numericValue = Number(rawValue);
+    values[fieldName] = Number.isFinite(numericValue) ? numericValue : null;
+  });
+
+  return { timestamp, values, rawPayload: payload };
+};
+
+const fetchDeviceReading = async (targetUrl, fieldNames) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const response = await fetch(targetUrl, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    const payload = contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
+
+    return normalizeDeviceReading(payload, fieldNames);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
+const colorToRgbTriplet = (color) => {
+  if (!color) {
+    return "93, 223, 179";
+  }
+
+  const probe = document.createElement("span");
+  probe.style.color = color;
+  probe.style.display = "none";
+  document.body.appendChild(probe);
+
+  const computedColor = getComputedStyle(probe).color;
+  document.body.removeChild(probe);
+
+  const match = computedColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+  if (!match) {
+    return "93, 223, 179";
+  }
+
+  return `${match[1]}, ${match[2]}, ${match[3]}`;
+};
+
+const formatChartValue = (value) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) {
+    return String(value ?? "--");
+  }
+
+  return numericValue.toLocaleString(undefined, {
+    maximumFractionDigits: 2,
+  });
+};
+
+const splitCsvLine = (line) => {
+  const cells = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const nextChar = line[index + 1];
+
+    if (char === '"' && inQuotes && nextChar === '"') {
+      current += '"';
+      index += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+
+    if (char === "," && !inQuotes) {
+      cells.push(current);
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  cells.push(current);
+  return cells.map((value) => value.trim());
+};
+
+const parseImportedReadings = (rawContent) => {
+  const text = String(rawContent ?? "").trim();
+  if (!text) return [];
+
+  if (text.startsWith("[") || text.startsWith("{")) {
+    const parsed = safeJsonParse(text);
+    const candidateList = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.readings)
+        ? parsed.readings
+        : Array.isArray(parsed?.data)
+          ? parsed.data
+          : [];
+
+    return candidateList
+      .map((item) => {
+        const timestampSource =
+          item?.timestamp ?? item?.time ?? item?.createdAt ?? item?.ts;
+        const timestampValue = timestampSource
+          ? new Date(timestampSource).getTime()
+          : NaN;
+        const timestamp = Number.isFinite(timestampValue)
+          ? timestampValue
+          : Date.now();
+        const values =
+          item?.values && typeof item.values === "object" ? item.values : item;
+
+        return {
+          timestamp,
+          values,
+        };
+      })
+      .filter((item) => item && typeof item === "object");
+  }
+
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length < 2) return [];
+
+  const headers = splitCsvLine(lines[0]);
+  const headerIndex = new Map(headers.map((header, index) => [header, index]));
+
+  return lines.slice(1).map((line) => {
+    const cells = splitCsvLine(line);
+    const timestampIndex = headerIndex.has("timestamp")
+      ? headerIndex.get("timestamp")
+      : -1;
+    const timestampSource = timestampIndex >= 0 ? cells[timestampIndex] : null;
+    const timestampValue = timestampSource
+      ? new Date(timestampSource).getTime()
+      : NaN;
+    const timestamp = Number.isFinite(timestampValue)
+      ? timestampValue
+      : Date.now();
+    const values = {};
+
+    headers.forEach((header, index) => {
+      if (header === "timestamp") {
+        return;
+      }
+      const numericValue = Number(cells[index]);
+      values[header] = Number.isFinite(numericValue) ? numericValue : null;
+    });
+
+    return { timestamp, values };
+  });
+};
+
 function FieldLineChart({ labels, series }) {
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
+  const [selectedPoint, setSelectedPoint] = useState(null);
+
+  const buildAreaGradient = (chart, topColor) => {
+    const { ctx, chartArea } = chart;
+
+    if (!chartArea) {
+      return `rgba(${topColor}, 0.12)`;
+    }
+
+    const gradient = ctx.createLinearGradient(
+      0,
+      chartArea.top,
+      0,
+      chartArea.bottom,
+    );
+    gradient.addColorStop(0, `rgba(${topColor}, 0.48)`);
+    gradient.addColorStop(0.55, `rgba(${topColor}, 0.18)`);
+    gradient.addColorStop(1, `rgba(${topColor}, 0.02)`);
+    return gradient;
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -70,11 +354,13 @@ function FieldLineChart({ labels, series }) {
         datasets: [
           {
             data: [],
-            borderWidth: 3,
-            pointRadius: 2,
-            pointHoverRadius: 3,
-            tension: 0.28,
-            fill: false,
+            borderWidth: 2.5,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            pointHitRadius: 14,
+            tension: 0.42,
+            fill: true,
+            cubicInterpolationMode: "monotone",
           },
         ],
       },
@@ -82,17 +368,43 @@ function FieldLineChart({ labels, series }) {
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
+        interaction: {
+          mode: "nearest",
+          intersect: false,
+        },
+        onClick: (_event, elements, chart) => {
+          if (!elements.length) {
+            setSelectedPoint(null);
+            return;
+          }
+
+          const point = elements[0];
+          const index = point.index;
+          const label = chart.data.labels?.[index] ?? "";
+          const value = chart.data.datasets?.[0]?.data?.[index];
+
+          setSelectedPoint({ index, label, value });
+        },
         layout: {
           padding: {
-            top: 6,
-            right: 10,
-            bottom: 14,
-            left: 10,
+            top: 12,
+            right: 12,
+            bottom: 8,
+            left: 4,
           },
         },
         plugins: {
           legend: { display: false },
-          tooltip: { enabled: true },
+          tooltip: {
+            enabled: true,
+            displayColors: false,
+            backgroundColor: "rgba(7, 13, 25, 0.92)",
+            titleColor: "#e6eeff",
+            bodyColor: "#e6eeff",
+            borderColor: "rgba(0, 212, 255, 0.28)",
+            borderWidth: 1,
+            padding: 10,
+          },
         },
         scales: {
           x: {
@@ -100,20 +412,30 @@ function FieldLineChart({ labels, series }) {
             ticks: {
               maxRotation: 0,
               autoSkip: true,
-              maxTicksLimit: 6,
-              padding: 10,
+              maxTicksLimit: 5,
+              padding: 8,
+              color: "#9fb0d9",
             },
           },
           y: {
-            grid: { drawBorder: false },
-            ticks: { maxTicksLimit: 5, padding: 6 },
+            grid: {
+              drawBorder: false,
+              color: (context) =>
+                context.tick.value === 0
+                  ? "rgba(0, 212, 255, 0.24)"
+                  : "rgba(160, 181, 223, 0.12)",
+            },
+            ticks: {
+              maxTicksLimit: 5,
+              padding: 8,
+              color: "#9fb0d9",
+            },
           },
         },
       },
     });
 
     chartRef.current = chart;
-
     return () => {
       chart.destroy();
       chartRef.current = null;
@@ -124,16 +446,26 @@ function FieldLineChart({ labels, series }) {
     const chart = chartRef.current;
     if (!chart) return;
 
-    const styles = getComputedStyle(document.documentElement);
-    const accent = styles.getPropertyValue("--accent-primary").trim();
+    const container =
+      canvasRef.current?.closest(".data-container") || document.documentElement;
+    const styles = getComputedStyle(container);
+    const accentSecondary = styles.getPropertyValue("--accent-secondary").trim();
     const border = styles.getPropertyValue("--border-color").trim();
     const textMuted = styles.getPropertyValue("--text-muted").trim();
     const textSecondary = styles.getPropertyValue("--text-secondary").trim();
 
+    const accentSecondaryRgb = colorToRgbTriplet(accentSecondary);
+
     chart.data.labels = labels;
     chart.data.datasets[0].data = series;
-    chart.data.datasets[0].borderColor = accent || "#a67c52";
-    chart.data.datasets[0].backgroundColor = "transparent";
+    chart.data.datasets[0].borderColor = accentSecondary || "#7cffb2";
+    chart.data.datasets[0].backgroundColor = (context) =>
+      buildAreaGradient(context.chart, accentSecondaryRgb);
+    chart.data.datasets[0].pointBackgroundColor = accentSecondary || "#7cffb2";
+    chart.data.datasets[0].pointBorderColor = accentSecondary || "#7cffb2";
+    chart.data.datasets[0].pointHoverBackgroundColor =
+      accentSecondary || "#7cffb2";
+    chart.data.datasets[0].pointHoverBorderColor = accentSecondary || "#7cffb2";
 
     chart.options.scales.x.ticks.color = textMuted || "#999";
     chart.options.scales.y.ticks.color = textMuted || "#999";
@@ -142,17 +474,51 @@ function FieldLineChart({ labels, series }) {
     chart.options.scales.x.border = { color: border || "#e0e0e0" };
     chart.options.scales.y.border = { color: border || "#e0e0e0" };
     chart.options.plugins.tooltip.bodyColor = textSecondary || "#6b6b6b";
+    chart.options.plugins.tooltip.titleColor = textSecondary || "#6b6b6b";
 
     chart.update("none");
   }, [labels, series]);
 
-  return <canvas ref={canvasRef} />;
+  useEffect(() => {
+    setSelectedPoint((current) => {
+      if (!current) {
+        return current;
+      }
+
+      if (current.index >= series.length) {
+        return null;
+      }
+
+      return {
+        ...current,
+        label: labels[current.index] ?? current.label,
+        value: series[current.index],
+      };
+    });
+  }, [labels, series]);
+
+  return (
+    <div className="data-sparkline-inner">
+      <canvas ref={canvasRef} />
+      {selectedPoint ? (
+        <div
+          className="data-chart-value-badge"
+          role="status"
+          aria-live="polite"
+        >
+          <span>{selectedPoint.label || "Selected"}</span>
+          <strong>{formatChartValue(selectedPoint.value)}</strong>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function DataPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [githubLink, setGithubLink] = useState("");
+  const [deviceApiUrl, setDeviceApiUrl] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [samplePeriodSec, setSamplePeriodSec] = useState("2");
@@ -162,12 +528,20 @@ function DataPage() {
 
   const [isLive, setIsLive] = useState(false);
   const intervalRef = useRef(null);
+  const isLiveRef = useRef(false);
   const lastValuesRef = useRef({});
   const [readings, setReadings] = useState([]);
 
   const [exportRange, setExportRange] = useState("1m");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  const [syncState, setSyncState] = useState("idle");
+  const [syncMessage, setSyncMessage] = useState("");
+  const [apiCheckState, setApiCheckState] = useState("idle");
+  const [apiCheckMessage, setApiCheckMessage] = useState("");
+  const [importState, setImportState] = useState("idle");
+  const [importMessage, setImportMessage] = useState("");
+  const [dashboardLimit, setDashboardLimit] = useState("10");
 
   const updateField = (index, value) => {
     setFields((current) => current.map((v, i) => (i === index ? value : v)));
@@ -175,11 +549,26 @@ function DataPage() {
 
   const activeFields = useMemo(() => normalizeFieldNames(fields), [fields]);
 
+  const applySetupRecord = (record) => {
+    const normalized = normalizeSetupRecord(record);
+
+    setName(normalized.name);
+    setDescription(normalized.description);
+    setGithubLink(normalized.githubLink);
+    setDeviceApiUrl(normalized.deviceApiUrl);
+    setLatitude(normalized.latitude);
+    setLongitude(normalized.longitude);
+    setSamplePeriodSec(normalized.samplePeriodSec);
+    setFields(normalized.fields);
+    setSubmitted(Boolean(record));
+  };
+
   const config = useMemo(() => {
     return {
       name: name.trim(),
       description: description.trim(),
       githubLink: githubLink.trim(),
+      deviceApiUrl: deviceApiUrl.trim(),
       location: {
         latitude: latitude === "" ? null : Number(latitude),
         longitude: longitude === "" ? null : Number(longitude),
@@ -191,6 +580,7 @@ function DataPage() {
     name,
     description,
     githubLink,
+    deviceApiUrl,
     latitude,
     longitude,
     samplePeriodSec,
@@ -198,37 +588,57 @@ function DataPage() {
   ]);
 
   useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const parsed = safeJsonParse(raw);
-    if (!parsed) return;
+    let cancelled = false;
 
-    setName(String(parsed.name ?? ""));
-    setDescription(String(parsed.description ?? ""));
-    setGithubLink(String(parsed.githubLink ?? ""));
-    setLatitude(
-      parsed.location?.latitude === null ||
-        parsed.location?.latitude === undefined
-        ? ""
-        : String(parsed.location.latitude),
-    );
-    setLongitude(
-      parsed.location?.longitude === null ||
-        parsed.location?.longitude === undefined
-        ? ""
-        : String(parsed.location.longitude),
-    );
-    setSamplePeriodSec(
-      parsed.samplePeriodSec === null || parsed.samplePeriodSec === undefined
-        ? "2"
-        : String(parsed.samplePeriodSec),
-    );
-    if (Array.isArray(parsed.fields)) {
-      const padded = [...parsed.fields].slice(0, 8);
-      while (padded.length < 8) padded.push("");
-      setFields(padded);
-    }
-    setSubmitted(true);
+    const bootstrapSetup = async () => {
+      let record = null;
+
+      try {
+        record = await getDataSetup();
+        if (record) {
+          setSyncState("success");
+          setSyncMessage("Loaded setup from MongoDB.");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+
+      if (!record) {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = safeJsonParse(raw);
+          if (parsed) {
+            record = parsed;
+            setSyncState("fallback");
+            setSyncMessage(
+              "Loaded setup from local cache and queued sync to MongoDB.",
+            );
+            void saveDataSetup(parsed).catch((error) => {
+              console.error(error);
+            });
+          }
+        }
+      }
+
+      if (!cancelled && record) {
+        applySetupRecord(record);
+      }
+
+      try {
+        const storedReadings = await getDataReadings({ limit: 500 });
+        if (!cancelled) {
+          setReadings(Array.isArray(storedReadings) ? storedReadings : []);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    void bootstrapSetup();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -243,41 +653,193 @@ function DataPage() {
   useEffect(() => {
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        clearTimeout(intervalRef.current);
         intervalRef.current = null;
       }
     };
   }, []);
 
+  const validateConfig = () => {
+    const errors = [];
+
+    if (!name.trim()) {
+      errors.push("Name is required.");
+    }
+
+    const activeFieldsList = normalizeFieldNames(fields);
+    if (activeFieldsList.length === 0) {
+      errors.push("At least one field name is required.");
+    }
+
+    const duplicateFields = activeFieldsList.filter(
+      (item, index) => activeFieldsList.indexOf(item) !== index,
+    );
+    if (duplicateFields.length > 0) {
+      errors.push(
+        `Duplicate field names: ${duplicateFields.join(", ")}. Each field must be unique.`,
+      );
+    }
+
+    if (latitude !== "") {
+      const lat = Number(latitude);
+      if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+        errors.push("Latitude must be between -90 and 90.");
+      }
+    }
+
+    if (longitude !== "") {
+      const lng = Number(longitude);
+      if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+        errors.push("Longitude must be between -180 and 180.");
+      }
+    }
+
+    const periodSec = clampPositiveInt(samplePeriodSec, 10);
+    if (periodSec < 1) {
+      errors.push("Sample period must be at least 1 second.");
+    }
+
+    return errors;
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
-    setSubmitted(true);
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    const validationErrors = validateConfig();
+    if (validationErrors.length > 0) {
+      setSyncState("error");
+      setSyncMessage(validationErrors.join(" "));
+      return;
     }
-    setIsLive(false);
-    setReadings([]);
-    lastValuesRef.current = {};
-    setActiveTab("live");
+    const submitSetup = async () => {
+      try {
+        await saveDataSetup(config);
+        await deleteDataReadings();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+        setSyncState("success");
+        setSyncMessage("Setup saved to MongoDB.");
+        setSubmitted(true);
+        if (intervalRef.current) {
+          clearTimeout(intervalRef.current);
+          intervalRef.current = null;
+        }
+        setIsLive(false);
+        isLiveRef.current = false;
+        setReadings([]);
+        lastValuesRef.current = {};
+        setActiveTab("live");
+      } catch (error) {
+        console.error(error);
+        setSyncState("error");
+        setSyncMessage(
+          `Could not save to MongoDB: ${error?.message || "Unknown error"}`,
+        );
+      }
+    };
+    void submitSetup();
   };
 
   const handleReset = () => {
-    setName("");
-    setDescription("");
-    setGithubLink("");
-    setLatitude("");
-    setLongitude("");
-    setSamplePeriodSec("2");
-    setFields(createDefaultFields());
-    setSubmitted(false);
-    setActiveTab("setup");
-    setReadings([]);
-    lastValuesRef.current = {};
+    const resetSetup = async () => {
+      try {
+        await deleteDataSetup();
+        setSyncState("success");
+        setSyncMessage("Setup and readings deleted from MongoDB.");
+      } catch (error) {
+        console.error(error);
+        setSyncState("error");
+        setSyncMessage(
+          `Could not delete from MongoDB: ${error?.message || "Unknown error"}`,
+        );
+      }
+
+      setName("");
+      setDescription("");
+      setGithubLink("");
+      setDeviceApiUrl("");
+      setLatitude("");
+      setLongitude("");
+      setSamplePeriodSec("2");
+      setFields(createDefaultFields());
+      setSubmitted(false);
+      setActiveTab("setup");
+      setReadings([]);
+      lastValuesRef.current = {};
+      setSyncState("idle");
+      setSyncMessage("");
+      setApiCheckState("idle");
+      setApiCheckMessage("");
+
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    void resetSetup();
+  };
+
+  const testDeviceApiConnection = async () => {
+    const targetUrl = deviceApiUrl.trim();
+
+    if (!targetUrl) {
+      setApiCheckState("error");
+      setApiCheckMessage("Please enter a Device API URL first.");
+      return;
+    }
+
     try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (err) {
-      console.error(err);
+      new URL(targetUrl);
+    } catch {
+      setApiCheckState("error");
+      setApiCheckMessage("Device API URL is not a valid URL.");
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    setApiCheckState("checking");
+    setApiCheckMessage("Testing connection...");
+
+    try {
+      const response = await fetch(targetUrl, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      let payload = null;
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        payload = await response.json();
+      } else {
+        payload = await response.text();
+      }
+
+      const previewText =
+        payload && typeof payload === "object"
+          ? Object.keys(payload).slice(0, 4).join(", ") || "JSON object"
+          : "text response";
+
+      setApiCheckState("success");
+      setApiCheckMessage(`Connection OK. Response looks like: ${previewText}.`);
+    } catch (error) {
+      const isAbort = error?.name === "AbortError";
+      setApiCheckState("error");
+      setApiCheckMessage(
+        isAbort
+          ? "Connection timed out after 8 seconds."
+          : `Connection failed: ${error?.message || "Unknown error"}`,
+      );
+    } finally {
+      clearTimeout(timeoutId);
     }
   };
 
@@ -297,49 +859,112 @@ function DataPage() {
     const periodMs = periodSec * 1000;
 
     if (intervalRef.current) {
-      clearInterval(intervalRef.current);
+      clearTimeout(intervalRef.current);
       intervalRef.current = null;
     }
 
     setIsLive(true);
+    isLiveRef.current = true;
 
-    const tick = () => {
-      const timestamp = Date.now();
-      const nextValues = {};
-      const lastValues = lastValuesRef.current;
+    const tick = async () => {
+      if (!isLiveRef.current) {
+        return;
+      }
 
-      activeFields.forEach((fieldName) => {
-        const prev = Number.isFinite(lastValues[fieldName])
-          ? lastValues[fieldName]
-          : 20 + Math.random() * 10;
-        const delta = (Math.random() - 0.5) * 1.2;
-        const next = Math.round((prev + delta) * 100) / 100;
-        nextValues[fieldName] = next;
-      });
+      const targetUrl = deviceApiUrl.trim();
+      let nextReading = null;
+      let readingSource = "mock";
 
-      lastValuesRef.current = { ...lastValues, ...nextValues };
+      if (targetUrl) {
+        try {
+          nextReading = await fetchDeviceReading(targetUrl, activeFields);
+          readingSource = "device";
+          setApiCheckState("success");
+          setApiCheckMessage("✓ Source: Device API");
+        } catch (error) {
+          setApiCheckState("warning");
+          setApiCheckMessage(`⚠ Source: Mock Fallback (API unreachable)`);
+        }
+      } else {
+        setApiCheckState("info");
+        setApiCheckMessage("ℹ Source: Mock Data (no Device API URL)");
+      }
+
+      if (!nextReading) {
+        nextReading = buildMockReading(activeFields, lastValuesRef.current);
+        readingSource = "mock";
+      }
+
+      lastValuesRef.current = {
+        ...lastValuesRef.current,
+        ...nextReading.values,
+      };
 
       setReadings((current) => {
-        const appended = [...current, { timestamp, values: nextValues }];
+        const appended = [...current, nextReading];
         const MAX = 5000;
         if (appended.length <= MAX) return appended;
         return appended.slice(appended.length - MAX);
       });
+
+      try {
+        await createDataReading({
+          timestamp: nextReading.timestamp,
+          values: nextReading.values,
+          source: readingSource,
+          rawPayload:
+            readingSource === "device"
+              ? (nextReading.rawPayload ?? null)
+              : null,
+        });
+      } catch (error) {
+        console.error(error);
+        setApiCheckState("error");
+        setApiCheckMessage(
+          `Reading not stored in MongoDB: ${error?.message || "Unknown error"}`,
+        );
+      }
+
+      if (isLiveRef.current) {
+        intervalRef.current = setTimeout(tick, periodMs);
+      }
     };
 
     tick();
-    intervalRef.current = setInterval(tick, periodMs);
   };
 
   const stopLive = () => {
     setIsLive(false);
+    isLiveRef.current = false;
     if (intervalRef.current) {
-      clearInterval(intervalRef.current);
+      clearTimeout(intervalRef.current);
       intervalRef.current = null;
     }
   };
 
   const latest = readings.length ? readings[readings.length - 1] : null;
+
+  const dashboardReadings = useMemo(() => {
+    const limit = clampPositiveInt(dashboardLimit, 10);
+    return [...readings].slice(-limit).reverse();
+  }, [readings, dashboardLimit]);
+
+  const dashboardStats = useMemo(() => {
+    const count = readings.length;
+    const fieldsCount = activeFields.length;
+    const sourceCounts = readings.reduce((acc, reading) => {
+      const source = String(reading?.source ?? "unknown");
+      acc[source] = (acc[source] || 0) + 1;
+      return acc;
+    }, {});
+
+    return {
+      count,
+      fieldsCount,
+      sourceCounts,
+      lastSource: latest?.source ? String(latest.source) : "unknown",
+    };
+  }, [readings, activeFields.length, latest]);
 
   const chartReadings = useMemo(() => {
     const { start, end } = computeExportRange();
@@ -439,6 +1064,70 @@ function DataPage() {
     downloadBlob(blob, filename);
   };
 
+  const handleImportFile = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const content = await file.text();
+      const imported = parseImportedReadings(content);
+
+      if (!imported.length) {
+        setImportState("error");
+        setImportMessage("No valid readings found in this file.");
+        return;
+      }
+
+      setImportState("checking");
+      setImportMessage(`Importing ${imported.length} reading(s)...`);
+
+      const normalizedFields = activeFields.length
+        ? activeFields
+        : Object.keys(imported[0]?.values || {});
+
+      const nextReadings = [];
+
+      for (const item of imported) {
+        const importedValues = {};
+        normalizedFields.forEach((fieldName) => {
+          const numericValue = Number(item?.values?.[fieldName]);
+          importedValues[fieldName] = Number.isFinite(numericValue)
+            ? numericValue
+            : null;
+        });
+
+        const reading = {
+          timestamp: item.timestamp || Date.now(),
+          values: importedValues,
+          source: "imported",
+          rawPayload: item,
+        };
+
+        nextReadings.push(reading);
+
+        try {
+          await createDataReading(reading);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      setReadings((current) => [...current, ...nextReadings]);
+      setImportState("success");
+      setImportMessage(
+        `Imported ${nextReadings.length} reading(s) into MongoDB.`,
+      );
+    } catch (error) {
+      console.error(error);
+      setImportState("error");
+      setImportMessage(`Import failed: ${error?.message || "Unknown error"}`);
+    }
+  };
+
   return (
     <div className="data-container">
       <div className="data-header">
@@ -495,6 +1184,46 @@ function DataPage() {
                   />
                 </div>
               </div>
+
+              <div className="data-group">
+                <label>Device API URL</label>
+                <input
+                  value={deviceApiUrl}
+                  onChange={(e) => setDeviceApiUrl(e.target.value)}
+                  placeholder="http://192.168.1.50/api/data"
+                />
+              </div>
+
+              <div className="data-actions">
+                <button
+                  type="button"
+                  className="data-secondary-btn"
+                  onClick={testDeviceApiConnection}
+                  disabled={
+                    !deviceApiUrl.trim() || apiCheckState === "checking"
+                  }
+                >
+                  {apiCheckState === "checking"
+                    ? "Testing..."
+                    : "Test Connection"}
+                </button>
+                {apiCheckMessage ? (
+                  <span
+                    className="data-saved"
+                    role="status"
+                    aria-live="polite"
+                    data-status={apiCheckState}
+                  >
+                    {apiCheckMessage}
+                  </span>
+                ) : null}
+              </div>
+
+              {syncMessage ? (
+                <p className="data-muted" data-sync-state={syncState}>
+                  {syncMessage}
+                </p>
+              ) : null}
 
               <div className="data-group">
                 <label>Description</label>
@@ -555,7 +1284,7 @@ function DataPage() {
 
               <div className="data-actions">
                 <button type="submit" className="data-primary-btn">
-                  Save (Demo)
+                  Save to MongoDB
                 </button>
                 <button
                   type="button"
@@ -717,9 +1446,9 @@ function DataPage() {
       {activeTab === "manage" ? (
         <div className="data-grid data-manage">
           <section className="data-card">
-            <h2>Manage</h2>
+            <h2>Dashboard</h2>
             <p className="data-muted">
-              Update / delete setup (demo). Live data will reset after saving.
+              View recent history, import readings, and manage the saved setup.
             </p>
 
             <div className="data-manage-actions">
@@ -752,13 +1481,151 @@ function DataPage() {
                 Clear Readings
               </button>
             </div>
+
+            <div className="data-group data-group-spaced">
+              <label>Import Readings</label>
+              <input
+                type="file"
+                accept=".json,.csv,application/json,text/csv"
+                onChange={handleImportFile}
+              />
+              {importMessage ? (
+                <p className="data-muted" data-import-state={importState}>
+                  {importMessage}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="data-group">
+              <label>Recent Items</label>
+              <input
+                type="number"
+                min="1"
+                max="50"
+                value={dashboardLimit}
+                onChange={(e) => setDashboardLimit(e.target.value)}
+                placeholder="10"
+              />
+            </div>
           </section>
 
           <aside className="data-card data-preview">
-            <h2>Current Setup</h2>
-            <pre className="data-json">
-              {JSON.stringify({ ...config, fields: activeFields }, null, 2)}
-            </pre>
+            <h2>History Summary</h2>
+            <div className="data-field-cards">
+              <div className="data-field-card">
+                <div className="data-field-name">Total readings</div>
+                <div className="data-field-value">{dashboardStats.count}</div>
+                <div className="data-field-meta">stored in MongoDB</div>
+              </div>
+              <div className="data-field-card">
+                <div className="data-field-name">Configured fields</div>
+                <div className="data-field-value">
+                  {dashboardStats.fieldsCount}
+                </div>
+                <div className="data-field-meta">active setup</div>
+              </div>
+              <div className="data-field-card">
+                <div className="data-field-name">Last source</div>
+                <div className="data-field-value">
+                  {dashboardStats.lastSource}
+                </div>
+                <div className="data-field-meta">device / mock / imported</div>
+              </div>
+            </div>
+
+            <h3 className="data-history-title">Recent History</h3>
+            <div className="data-history-table-wrap">
+              <table className="data-history-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Source</th>
+                    {activeFields.map((fieldName) => (
+                      <th key={fieldName}>{fieldName}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {dashboardReadings.length === 0 ? (
+                    <tr>
+                      <td colSpan={2 + activeFields.length}>
+                        No readings yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    dashboardReadings.map((reading, index) => (
+                      <tr key={`${reading.timestamp}-${index}`}>
+                        <td>{new Date(reading.timestamp).toLocaleString()}</td>
+                        <td>
+                          <span
+                            className={`data-source-pill data-source-${String(reading.source || "unknown").toLowerCase()}`}
+                          >
+                            {reading.source || "unknown"}
+                          </span>
+                        </td>
+                        {activeFields.map((fieldName) => (
+                          <td key={fieldName}>
+                            {reading.values?.[fieldName] ?? "—"}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              className="data-history-cards"
+              aria-label="Recent history cards"
+            >
+              {dashboardReadings.length === 0 ? (
+                <div className="data-history-empty">No readings yet.</div>
+              ) : (
+                dashboardReadings.map((reading, index) => (
+                  <article
+                    className="data-history-card"
+                    key={`${reading.timestamp}-${index}-card`}
+                  >
+                    <div className="data-history-card-top">
+                      <div>
+                        <div className="data-history-card-label">Time</div>
+                        <div className="data-history-card-value">
+                          {new Date(reading.timestamp).toLocaleString()}
+                        </div>
+                      </div>
+                      <span
+                        className={`data-source-pill data-source-${String(reading.source || "unknown").toLowerCase()}`}
+                      >
+                        {reading.source || "unknown"}
+                      </span>
+                    </div>
+
+                    <div className="data-history-card-grid">
+                      {activeFields.length === 0 ? (
+                        <div className="data-history-empty">
+                          No fields configured.
+                        </div>
+                      ) : (
+                        activeFields.map((fieldName) => (
+                          <div
+                            className="data-history-mini"
+                            key={`${fieldName}-${reading.timestamp}`}
+                          >
+                            <span className="data-history-mini-label">
+                              {fieldName}
+                            </span>
+                            <strong className="data-history-mini-value">
+                              {reading.values?.[fieldName] ?? "—"}
+                            </strong>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
           </aside>
         </div>
       ) : null}

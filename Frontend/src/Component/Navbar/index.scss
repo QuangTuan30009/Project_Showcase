@@ -123,3 +123,78 @@
     }
   }
 }
+
+.navbar-container.data-ops {
+  background: linear-gradient(
+    180deg,
+    rgba(243, 249, 255, 0.96),
+    rgba(231, 241, 255, 0.92)
+  );
+  border-bottom: 1px solid rgba(120, 150, 200, 0.35);
+  backdrop-filter: blur(10px);
+
+  .navbar_logo {
+    i,
+    h2 {
+      color: #102241;
+    }
+  }
+
+  .navbar_menu {
+    .navbar_menu_list li {
+      color: #405f8f;
+
+      &:hover {
+        color: #008bb3;
+      }
+    }
+
+    .theme-toggle {
+      border-color: #9eb9de;
+      color: #008bb3;
+
+      &:hover {
+        background: linear-gradient(135deg, #00c9ee, #6be9bf);
+        border-color: transparent;
+        color: #062333;
+      }
+    }
+  }
+}
+
+[data-theme="dark"] .navbar-container.data-ops {
+  background: linear-gradient(
+    180deg,
+    rgba(10, 15, 30, 0.96),
+    rgba(12, 21, 40, 0.94)
+  );
+  border-bottom: 1px solid rgba(36, 58, 96, 0.85);
+
+  .navbar_logo {
+    i,
+    h2 {
+      color: #dfe9ff;
+    }
+  }
+
+  .navbar_menu {
+    .navbar_menu_list li {
+      color: #a0b5df;
+
+      &:hover {
+        color: #00d4ff;
+      }
+    }
+
+    .theme-toggle {
+      border-color: #2d3f67;
+      color: #00d4ff;
+
+      &:hover {
+        background: linear-gradient(135deg, #00d4ff, #7cffb2);
+        border-color: transparent;
+        color: #07111f;
+      }
+    }
+  }
+}
