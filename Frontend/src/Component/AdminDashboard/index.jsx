@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import * as api from "../../Services/api";
 import "./index.scss";
+import DataSetupTab from "./DataSetupTab";
+import DataManageTab from "./DataManageTab";
 
 const statusOrder = ["pending", "approved", "rejected"];
 
@@ -60,6 +62,7 @@ function AdminDashboard({ onBackToSite }) {
   const [editUploadMethod, setEditUploadMethod] = useState("url");
   const [editForm, setEditForm] = useState(createEmptyEditForm());
   const [editImagePreview, setEditImagePreview] = useState("");
+  const [activeTab, setActiveTab] = useState("moderation");
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", "dark");
@@ -424,7 +427,33 @@ function AdminDashboard({ onBackToSite }) {
         </div>
       </header>
 
-      <section className="admin-stats-grid">
+      <div className="admin-tabs-nav" style={{ padding: '0 2rem 1.5rem', display: 'flex', gap: '1rem' }}>
+        <button 
+          className={`ghost-btn ${activeTab === 'moderation' ? 'active-tab' : ''}`} 
+          style={{ background: activeTab === 'moderation' ? 'rgba(0, 212, 255, 0.15)' : 'transparent', border: activeTab === 'moderation' ? '1px solid rgba(0, 212, 255, 0.3)' : '1px solid transparent' }}
+          onClick={() => setActiveTab('moderation')}
+        >
+          <i className="bi bi-shield-check" /> Moderation
+        </button>
+        <button 
+          className={`ghost-btn ${activeTab === 'data-setup' ? 'active-tab' : ''}`} 
+          style={{ background: activeTab === 'data-setup' ? 'rgba(0, 212, 255, 0.15)' : 'transparent', border: activeTab === 'data-setup' ? '1px solid rgba(0, 212, 255, 0.3)' : '1px solid transparent' }}
+          onClick={() => setActiveTab('data-setup')}
+        >
+          <i className="bi bi-gear" /> Data Setup
+        </button>
+        <button 
+          className={`ghost-btn ${activeTab === 'data-manage' ? 'active-tab' : ''}`} 
+          style={{ background: activeTab === 'data-manage' ? 'rgba(0, 212, 255, 0.15)' : 'transparent', border: activeTab === 'data-manage' ? '1px solid rgba(0, 212, 255, 0.3)' : '1px solid transparent' }}
+          onClick={() => setActiveTab('data-manage')}
+        >
+          <i className="bi bi-database" /> Data Manage
+        </button>
+      </div>
+
+      {activeTab === "moderation" && (
+        <>
+          <section className="admin-stats-grid">
         <article className="stat-card accent">
           <span>Total</span>
           <strong>{stats.total}</strong>
@@ -745,6 +774,20 @@ function AdminDashboard({ onBackToSite }) {
           </div>
         </aside>
       </section>
+      </>
+      )}
+
+      {activeTab === "data-setup" && (
+        <div style={{ padding: '0 2rem 2rem' }}>
+          <DataSetupTab />
+        </div>
+      )}
+
+      {activeTab === "data-manage" && (
+        <div style={{ padding: '0 2rem 2rem' }}>
+          <DataManageTab />
+        </div>
+      )}
 
       {isEditModalOpen ? (
         <div className="admin-edit-overlay" onClick={closeEditModal}>

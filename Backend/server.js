@@ -6,6 +6,8 @@ const Project = require("./models/Project");
 const DataSetup = require("./models/DataSetup");
 const DataReading = require("./models/DataReading");
 
+const http = require("http");
+const { Server } = require("socket.io");
 const app = express();
 const dns = require("node:dns");
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
@@ -49,7 +51,32 @@ app.use(
 app.use(express.json({ limit: "10mb" })); // Increase payload limit
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
-const DATA_SETUP_KEY = "default";
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin) || isLocalDevOrigin(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    credentials: true
+  }
+});
+
+io.on("connection", (socket) => {
+  console.log("Socket connected:", socket.id);
+
+  socket.on("join_room", (setupKey) => {
+    socket.join(setupKey);
+  });
+
+  socket.on("disconnect", () => {
+  });
+});
+
+const crypto = require("crypto");
 
 const normalizeDataFields = (fields) => {
   if (!Array.isArray(fields)) {
@@ -82,11 +109,11 @@ const toPositiveInt = (value, fallback) => {
 };
 
 const buildDataSetupPayload = (body = {}) => ({
-  setupKey: DATA_SETUP_KEY,
   name: String(body.name ?? "").trim(),
   description: String(body.description ?? "").trim(),
   githubLink: String(body.githubLink ?? "").trim(),
   deviceApiUrl: String(body.deviceApiUrl ?? "").trim(),
+  deviceApiKey: String(body.deviceApiKey ?? "").trim(),
   location: {
     latitude: toNullableNumber(body.location?.latitude),
     longitude: toNullableNumber(body.location?.longitude),
@@ -103,6 +130,43 @@ mongoose
     console.error("❌ MongoDB connection error:", err);
     process.exit(1);
   });
+
+const jwt = require("jsonwebtoken");
+
+const JWT_SECRET = process.env.JWT_SECRET || "default_fallback_secret_123";
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "duyetbai123";
+
+const authenticateJWT = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader) {
+    const token = authHeader.split(" ")[1];
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+      if (err) {
+        return res.status(403).json({ error: "Token is invalid or expired" });
+      }
+      req.user = user;
+      next();
+    });
+  } else {
+    res.status(401).json({ error: "Authorization header is missing" });
+  }
+};
+
+app.post("/api/auth/login", (req, res) => {
+  const { username, password } = req.body;
+
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    const token = jwt.sign({ username, role: "admin" }, JWT_SECRET, {
+      expiresIn: "24h",
+    });
+    res.json({ token });
+  } else {
+    res.status(401).json({ error: "Invalid username or password" });
+  }
+});
 
 // GET all projects
 app.get("/api/projects", async (req, res) => {
@@ -140,7 +204,7 @@ app.get("/api/projects/:id", async (req, res) => {
 });
 
 // POST new project
-app.post("/api/projects", async (req, res) => {
+app.post("/api/projects", authenticateJWT, async (req, res) => {
   try {
     const payload = {
       ...req.body,
@@ -156,7 +220,7 @@ app.post("/api/projects", async (req, res) => {
 });
 
 // PUT update project
-app.put("/api/projects/:id", async (req, res) => {
+app.put("/api/projects/:id", authenticateJWT, async (req, res) => {
   try {
     const payload = { ...req.body };
 
@@ -179,7 +243,7 @@ app.put("/api/projects/:id", async (req, res) => {
 });
 
 // PATCH moderation status
-app.patch("/api/projects/:id/moderation", async (req, res) => {
+app.patch("/api/projects/:id/moderation", authenticateJWT, async (req, res) => {
   try {
     const { moderationStatus, moderationNote } = req.body;
     const payload = {
@@ -205,7 +269,7 @@ app.patch("/api/projects/:id/moderation", async (req, res) => {
 });
 
 // DELETE project
-app.delete("/api/projects/:id", async (req, res) => {
+app.delete("/api/projects/:id", authenticateJWT, async (req, res) => {
   try {
     const project = await Project.findByIdAndDelete(req.params.id);
     if (!project) {
@@ -218,10 +282,21 @@ app.delete("/api/projects/:id", async (req, res) => {
   }
 });
 
-// GET data setup
-app.get("/api/data/setup", async (req, res) => {
+// GET all data setups
+app.get("/api/data/setups", async (req, res) => {
   try {
-    const setup = await DataSetup.findOne({ setupKey: DATA_SETUP_KEY });
+    const setups = await DataSetup.find().sort({ createdAt: -1 });
+    res.json(setups);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch data setups" });
+  }
+});
+
+// GET data setup by key
+app.get("/api/data/setup/:setupKey", async (req, res) => {
+  try {
+    const setup = await DataSetup.findOne({ setupKey: req.params.setupKey });
 
     if (!setup) {
       return res.status(404).json({ error: "Data setup not found" });
@@ -234,13 +309,29 @@ app.get("/api/data/setup", async (req, res) => {
   }
 });
 
+// POST data setup (Create new)
+app.post("/api/data/setup", authenticateJWT, async (req, res) => {
+  try {
+    const payload = buildDataSetupPayload(req.body);
+    payload.setupKey = req.body.setupKey || crypto.randomBytes(4).toString("hex");
+
+    const setup = new DataSetup(payload);
+    await setup.save();
+
+    res.status(201).json(setup);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to create data setup" });
+  }
+});
+
 // PUT data setup
-app.put("/api/data/setup", async (req, res) => {
+app.put("/api/data/setup/:setupKey", authenticateJWT, async (req, res) => {
   try {
     const payload = buildDataSetupPayload(req.body);
 
     const setup = await DataSetup.findOneAndUpdate(
-      { setupKey: DATA_SETUP_KEY },
+      { setupKey: req.params.setupKey },
       payload,
       {
         new: true,
@@ -258,10 +349,10 @@ app.put("/api/data/setup", async (req, res) => {
 });
 
 // DELETE data setup and readings
-app.delete("/api/data/setup", async (req, res) => {
+app.delete("/api/data/setup/:setupKey", authenticateJWT, async (req, res) => {
   try {
-    await DataReading.deleteMany({ setupKey: DATA_SETUP_KEY });
-    await DataSetup.findOneAndDelete({ setupKey: DATA_SETUP_KEY });
+    await DataReading.deleteMany({ setupKey: req.params.setupKey });
+    await DataSetup.findOneAndDelete({ setupKey: req.params.setupKey });
 
     res.json({ message: "Data setup deleted successfully" });
   } catch (error) {
@@ -271,9 +362,9 @@ app.delete("/api/data/setup", async (req, res) => {
 });
 
 // DELETE readings only
-app.delete("/api/data/readings", async (req, res) => {
+app.delete("/api/data/readings/:setupKey", authenticateJWT, async (req, res) => {
   try {
-    await DataReading.deleteMany({ setupKey: DATA_SETUP_KEY });
+    await DataReading.deleteMany({ setupKey: req.params.setupKey });
     res.json({ message: "Data readings cleared successfully" });
   } catch (error) {
     console.error(error);
@@ -282,10 +373,10 @@ app.delete("/api/data/readings", async (req, res) => {
 });
 
 // GET recent readings
-app.get("/api/data/readings", async (req, res) => {
+app.get("/api/data/readings/:setupKey", async (req, res) => {
   try {
     const limit = toPositiveInt(req.query.limit, 500);
-    const readings = await DataReading.find({ setupKey: DATA_SETUP_KEY })
+    const readings = await DataReading.find({ setupKey: req.params.setupKey })
       .sort({ timestamp: -1 })
       .limit(limit);
 
@@ -296,11 +387,11 @@ app.get("/api/data/readings", async (req, res) => {
   }
 });
 
-// POST a new reading
-app.post("/api/data/readings", async (req, res) => {
+// POST a new reading (Used by Frontend Mock, protected by JWT)
+app.post("/api/data/readings/:setupKey", authenticateJWT, async (req, res) => {
   try {
     const payload = {
-      setupKey: DATA_SETUP_KEY,
+      setupKey: req.params.setupKey,
       timestamp: req.body.timestamp ? new Date(req.body.timestamp) : new Date(),
       values: req.body.values ?? {},
       source: req.body.source || "device",
@@ -310,6 +401,9 @@ app.post("/api/data/readings", async (req, res) => {
     const reading = new DataReading(payload);
     await reading.save();
 
+    // Emit real-time event to clients in the room
+    io.to(req.params.setupKey).emit("new_reading", reading);
+
     res.status(201).json(reading);
   } catch (error) {
     console.error(error);
@@ -318,7 +412,7 @@ app.post("/api/data/readings", async (req, res) => {
 });
 
 // POST data ingest endpoint for MCU
-app.post("/api/data/ingest", async (req, res) => {
+app.post("/api/data/ingest/:setupKey", async (req, res) => {
   try {
     const payload = req.body || {};
 
@@ -355,7 +449,15 @@ app.post("/api/data/ingest", async (req, res) => {
       ? timestampValue
       : Date.now();
 
-    const setup = await DataSetup.findOne({ setupKey: DATA_SETUP_KEY });
+    const setup = await DataSetup.findOne({ setupKey: req.params.setupKey });
+    
+    if (setup && setup.deviceApiKey) {
+      const providedKey = req.headers["x-device-api-key"] || req.headers["x-api-key"];
+      if (providedKey !== setup.deviceApiKey) {
+        return res.status(401).json({ error: "Unauthorized: Invalid Device API Key" });
+      }
+    }
+
     const fieldNames = setup?.fields ?? [];
 
     const values = {};
@@ -370,7 +472,7 @@ app.post("/api/data/ingest", async (req, res) => {
     });
 
     const reading = new DataReading({
-      setupKey: DATA_SETUP_KEY,
+      setupKey: req.params.setupKey,
       timestamp: new Date(timestamp),
       values,
       source: "mcu",
@@ -378,6 +480,9 @@ app.post("/api/data/ingest", async (req, res) => {
     });
 
     await reading.save();
+
+    // Emit real-time event to clients in the room
+    io.to(req.params.setupKey).emit("new_reading", reading);
 
     res.status(201).json({
       success: true,
@@ -397,6 +502,6 @@ app.get("/api/test", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });

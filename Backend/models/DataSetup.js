@@ -26,6 +26,10 @@ const dataSetupSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    deviceApiKey: {
+      type: String,
+      default: "",
+    },
     location: {
       latitude: {
         type: Number,
